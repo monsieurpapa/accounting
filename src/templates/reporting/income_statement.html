@@ -1,0 +1,132 @@
+{% load i18n %}
+{% block title %}{% trans "Compte de Résultat" %} | Système de Comptabilité{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">{% trans "Compte de Résultat" %}</h5>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'reporting:index' %}" class="btn btn-falcon-default btn-sm me-2">
+                    <span class="fas fa-arrow-left me-1"></span>{% trans "Back" %}
+                </a>
+                <div class="dropdown font-sans-serif d-inline-block">
+                    <button class="btn btn-falcon-default btn-sm dropdown-toggle" type="button" id="exportDropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="fas fa-external-link-alt me-1"></span>{% trans "Exporter" %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
+                        <div class="bg-white py-2">
+                            <a class="dropdown-item" href="#"><span class="far fa-file-pdf me-2"></span>PDF</a>
+                            <a class="dropdown-item" href="#"><span class="far fa-file-excel me-2"></span>Excel</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><span class="fas fa-print me-2"></span>Imprimer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border-top">
+        <form method="get" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fs--1">{% trans "Exercice fiscal" %}</label>
+                    <select name="fiscal_year" class="form-select form-select-sm shadow-none">
+                        <option value="">-- {% trans "Sélectionner" %} --</option>
+                        {% for fy in fiscal_years %}
+                        <option value="{{ fy.pk }}" {% if current_fiscal_year and fy.pk==current_fiscal_year.pk
+                            %}selected{% endif %}>{{ fy.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-falcon-primary btn-sm w-100">
+                        <span class="fas fa-filter me-1"></span>{% trans "Filtrer" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="border rounded-3 p-3 bg-light h-100">
+                    <h6 class="text-900 border-bottom pb-2 mb-3"><span
+                            class="fas fa-chart-line me-2 text-success"></span>{% trans "Revenus" %}</h6>
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-sm table-dashboard mb-0 fs--1">
+                            <thead class="bg-200">
+                                <tr>
+                                    <th class="align-middle px-3">{% trans "Code" %}</th>
+                                    <th class="align-middle">{% trans "Nom" %}</th>
+                                    <th class="align-middle text-end px-3">{% trans "Montant" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in revenues %}
+                                <tr>
+                                    <td class="align-middle px-3 fw-semi-bold">{{ row.code }}</td>
+                                    <td class="align-middle">{{ row.name }}</td>
+                                    <td class="align-middle text-end px-3 fw-bold">{{ row.balance|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-white fw-bold">
+                                <tr>
+                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">{% trans "Total Revenus"
+                                        %}</td>
+                                    <td class="text-end px-3 text-success">{{ total_revenue|floatformat:2 }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="border rounded-3 p-3 bg-light h-100">
+                    <h6 class="text-900 border-bottom pb-2 mb-3"><span class="fas fa-receipt me-2 text-danger"></span>{%
+                        trans "Dépenses" %}</h6>
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-sm table-dashboard mb-0 fs--1">
+                            <thead class="bg-200">
+                                <tr>
+                                    <th class="align-middle px-3">{% trans "Code" %}</th>
+                                    <th class="align-middle">{% trans "Nom" %}</th>
+                                    <th class="align-middle text-end px-3">{% trans "Montant" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in expenses %}
+                                <tr>
+                                    <td class="align-middle px-3 fw-semi-bold">{{ row.code }}</td>
+                                    <td class="align-middle">{{ row.name }}</td>
+                                    <td class="align-middle text-end px-3 fw-bold">{{ row.balance|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-white fw-bold">
+                                <tr>
+                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">{% trans "Total Dépenses"
+                                        %}</td>
+                                    <td class="text-end px-3 text-danger">{{ total_expense|floatformat:2 }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 p-3 border rounded-3 bg-light text-center">
+            <h4 class="mb-1 text-900">{% trans "Résultat Net" %}:
+                <span class="{% if net_income >= 0 %}text-success{% else %}text-danger{% endif %}">{{
+                    net_income|floatformat:2 }}</span>
+            </h4>
+            <p class="mb-0 fs--1 text-700"><strong>{% trans "Généré le" %}:</strong> {{ generation_date|date:"d/m/Y H:i"
+                }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

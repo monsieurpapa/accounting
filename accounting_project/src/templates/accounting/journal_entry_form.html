@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvelle écriture comptable | Système de Comptabilité{% endblock %}
+
+{% block page_title %}Nouvelle écriture comptable{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'accounting:journal_entries' %}">Écritures comptables</a></li>
+<li class="breadcrumb-item active" aria-current="page">Nouvelle écriture</li>
+{% endblock %}
+
+{% block content %}
+<h1>{% if form.instance.pk %}Edit{% else %}Create{% endif %} Journal Entry</h1>
+<form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <h3>Entry Lines</h3>
+    {{ formset.management_form }}
+    <table>
+        <tr>
+            <th>Account</th><th>Debit</th><th>Credit</th><th>Description</th><th>Delete?</th>
+        </tr>
+        {% for form in formset %}
+        <tr>
+            <td>{{ form.account }}</td>
+            <td>{{ form.debit_amount }}</td>
+            <td>{{ form.credit_amount }}</td>
+            <td>{{ form.description }}</td>
+            <td>{% if form.instance.pk %}{{ form.DELETE }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if formset.non_form_errors %}
+        <div class="error">{{ formset.non_form_errors }}</div>
+    {% endif %}
+    <button type="submit">Save</button>
+</form>
+<a href="{% url 'accounting:journal_entry_list' %}">Back to list</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Journal entry form functionality is handled in main.js
+</script>
+{% endblock %}

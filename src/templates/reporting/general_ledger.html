@@ -1,0 +1,104 @@
+{% load i18n %}
+{% block title %}{% trans "Grand Livre" %} | Système de Comptabilité{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">{% trans "Grand Livre" %}</h5>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'reporting:index' %}" class="btn btn-falcon-default btn-sm me-2">
+                    <span class="fas fa-arrow-left me-1"></span>{% trans "Back" %}
+                </a>
+                <div class="dropdown font-sans-serif d-inline-block">
+                    <button class="btn btn-falcon-default btn-sm dropdown-toggle" type="button" id="exportDropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="fas fa-external-link-alt me-1"></span>{% trans "Exporter" %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
+                        <div class="bg-white py-2">
+                            <a class="dropdown-item" href="#"><span class="far fa-file-pdf me-2"></span>PDF</a>
+                            <a class="dropdown-item" href="#"><span class="far fa-file-excel me-2"></span>Excel</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><span class="fas fa-print me-2"></span>Imprimer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border-top">
+        <form method="get" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fs--1">{% trans "Compte" %}</label>
+                    <select name="account" class="form-select form-select-sm shadow-none">
+                        <option value="">-- {% trans "Sélectionner" %} --</option>
+                        {% for acc in accounts %}
+                        <option value="{{ acc.pk }}" {% if selected_account and acc.pk==selected_account.pk %}selected{%
+                            endif %}>{{ acc.code }} - {{ acc.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fs--1">{% trans "Exercice fiscal" %}</label>
+                    <select name="fiscal_year" class="form-select form-select-sm shadow-none">
+                        <option value="">-- {% trans "Sélectionner" %} --</option>
+                        {% for fy in fiscal_years %}
+                        <option value="{{ fy.pk }}">{{ fy.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fs--1">{% trans "Période" %}</label>
+                    <select name="period" class="form-select form-select-sm shadow-none">
+                        <option value="">-- {% trans "Toutes" %} --</option>
+                        {% for p in periods %}
+                        <option value="{{ p.pk }}">{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-falcon-primary btn-sm w-100">
+                        <span class="fas fa-filter me-1"></span>{% trans "Filtrer" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="table-responsive scrollbar">
+            <table class="table table-sm table-dashboard table-striped mb-0 fs--1 border-bottom">
+                <thead class="bg-200 text-900">
+                    <tr>
+                        <th class="align-middle px-3">{% trans "Date" %}</th>
+                        <th class="align-middle">{% trans "Journal" %}</th>
+                        <th class="align-middle">{% trans "Référence" %}</th>
+                        <th class="align-middle">{% trans "Description" %}</th>
+                        <th class="align-middle text-end">{% trans "Débit" %}</th>
+                        <th class="align-middle text-end px-3">{% trans "Crédit" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in entry_lines %}
+                    <tr class="btn-reveal-trigger">
+                        <td class="align-middle px-3 white-space-nowrap">{{ line.journal_entry.date|date:"d M, Y" }}
+                        </td>
+                        <td class="align-middle white-space-nowrap">{{ line.journal_entry.journal }}</td>
+                        <td class="align-middle">{{ line.journal_entry.reference }}</td>
+                        <td class="align-middle">{{ line.description }}</td>
+                        <td class="align-middle text-end fw-semi-bold">{{ line.debit_amount|floatformat:2 }}</td>
+                        <td class="align-middle text-end px-3 fw-semi-bold">{{ line.credit_amount|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">{% trans "Aucune écriture trouvée." %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

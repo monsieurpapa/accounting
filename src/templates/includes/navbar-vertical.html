@@ -1,0 +1,157 @@
+{% load static i18n %}
+<script>
+    var isFluid = JSON.parse(localStorage.getItem('isFluid'));
+    if (isFluid) {
+        var container = document.querySelector('[data-layout]');
+        container.classList.remove('container');
+        container.classList.add('container-fluid');
+    }
+</script>
+<nav class="navbar navbar-light navbar-vertical navbar-expand-xl">
+    <script>
+        var navbarStyle = localStorage.getItem("navbarStyle");
+        if (navbarStyle && navbarStyle !== 'transparent') {
+            document.querySelector('.navbar-vertical').classList.add(`navbar-${navbarStyle}`);
+        }
+    </script>
+    <div class="d-flex align-items-center">
+        <div class="toggle-icon-wrapper">
+            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
+                data-bs-placement="left" title="Toggle Navigation"><span class="navbar-toggle-icon"><span
+                        class="toggle-line"></span></span></button>
+        </div>
+        <a class="navbar-brand" href="{% url 'accounting:dashboard' %}">
+            <div class="d-flex align-items-center py-3" id="main-logo">
+                <picture>
+                    <source srcset="{% static 'app/img/TicTacFlow_logo_dark.png' %}"
+                        media="(prefers-color-scheme: dark)">
+                    <img class="me-2" src="{% static 'app/img/TicTacFlow_logo.png' %}" alt="TicTacFlow Solutions"
+                        width="100" />
+                </picture>
+            </div>
+        </a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
+        <div class="navbar-vertical-content scrollbar">
+            <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
+
+                {% with request.resolver_match.app_name as app_name %}
+                {% with request.resolver_match.url_name as url_name %}
+
+                <!-- Common Dashboard -->
+                <li class="nav-item">
+                    <a class="nav-link {% if url_name == 'dashboard' %}active{% endif %}"
+                        href="{% url 'accounting:dashboard' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-chart-pie fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Dashboard</span>
+                        </div>
+                    </a>
+                </li>
+
+                {% if user.is_authenticated %}
+                <li class="nav-divider">Accounting</li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'chart_of_account' in url_name %}active{% endif %}"
+                        href="{% url 'accounting:chart_of_accounts_list' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-list-ul fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Chart of Accounts</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'journal_list' in url_name or 'journal_create' in url_name or 'journal_delete' in url_name or 'journal_edit' in url_name %}active{% endif %}"
+                        href="{% url 'accounting:journal_list' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-book fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Journals</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if 'journal_entry' in url_name %}active{% endif %}"
+                        href="{% url 'accounting:journal_entry_list' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-edit fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Journal Entries</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-divider">Reporting</li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if app_name == 'reporting' %}active{% endif %}"
+                        href="{% url 'reporting:index' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-file-invoice-dollar fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Financial Reports</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-divider">Budgeting</li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if app_name == 'budget' %}active{% endif %}"
+                        href="{% url 'budget:budget_list' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-wallet fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Budgets</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-divider">Cash Flow</li>
+
+                <li class="nav-item">
+                    <a class="nav-link {% if app_name == 'cashflow' %}active{% endif %}"
+                        href="{% url 'cashflow:payment_list' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-hand-holding-usd fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Payments & Receipts</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-divider">System</li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account_logout' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-sign-out-alt fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Logout</span>
+                        </div>
+                    </a>
+                </li>
+
+                {% else %}
+                <!-- Unauthenticated Users -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account_login' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-sign-in-alt fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Login</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'account_signup' %}" role="button">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-user-plus fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Register</span>
+                        </div>
+                    </a>
+                </li>
+                {% endif %}
+                {% endwith %}
+                {% endwith %}
+
+            </ul>
+        </div>
+    </div>
+</nav>

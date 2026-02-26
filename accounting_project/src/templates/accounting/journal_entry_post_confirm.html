@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Post Journal Entry</h1>
+<p>Are you sure you want to post (finalize) this entry? This action cannot be undone.</p>
+<form method="post">{% csrf_token %}
+    <button type="submit">Confirm Post</button>
+</form>
+<a href="{% url 'accounting:journal_entry_detail' object.pk %}">Cancel</a>
+{% endblock %} 

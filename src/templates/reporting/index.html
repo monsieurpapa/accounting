@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}{% trans "Reporting Dashboard" %} | Système de Comptabilité{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-primary text-primary me-2"><span
+                            class="fas fa-file-invoice-dollar fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "Trial Balance" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "View opening balances, period movements, and closing balances for all accounts." %}
+                </p>
+                <a href="{% url 'reporting:trial_balance' %}" class="btn btn-falcon-primary btn-sm mt-2">
+                    {% trans "View Report" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-warning text-warning me-2"><span
+                            class="fas fa-university fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "Balance Sheet" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "A real-time snapshot of assets, liabilities, and equity." %}
+                </p>
+                <a href="{% url 'reporting:balance_sheet' %}" class="btn btn-falcon-warning btn-sm mt-2">
+                    {% trans "View Report" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-success text-success me-2"><span
+                            class="fas fa-chart-line fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "Income Statement" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "Analyze revenue, expenses, and net profit over a selected period." %}
+                </p>
+                <a href="{% url 'reporting:income_statement' %}" class="btn btn-falcon-success btn-sm mt-2">
+                    {% trans "View Report" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-info text-info me-2"><span
+                            class="fas fa-book-open fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "General Ledger" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "Drill down into transaction details for any specific account." %}
+                </p>
+                <a href="{% url 'reporting:general_ledger' %}" class="btn btn-falcon-info btn-sm mt-2">
+                    {% trans "View Details" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

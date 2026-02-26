@@ -1,0 +1,77 @@
+{% extends 'auth_layout.html' %}
+
+{% block title %}Connexion | Système de Comptabilité{% endblock %}
+
+{% block auth_title %}Connexion{% endblock %}
+
+{% block auth_content %}
+<form method="post" action="{% url 'login' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="id_username" class="form-label">Nom d'utilisateur</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" class="form-control" id="id_username" name="username" placeholder="Entrez votre nom d'utilisateur" required>
+        </div>
+        {% if form.username.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.username.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label for="id_password" class="form-label">Mot de passe</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" class="form-control" id="id_password" name="password" placeholder="Entrez votre mot de passe" required>
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        {% if form.password.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.password.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="id_remember_me" name="remember_me">
+        <label class="form-check-label" for="id_remember_me">
+            Se souvenir de moi
+        </label>
+    </div>
+    <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Connexion</button>
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<div class="small">
+    <a href="{% url 'password_reset' %}">Mot de passe oublié?</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('id_password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+</script>
+{% endblock %}

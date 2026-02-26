@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Account Detail</h1>
+<ul>
+    <li>Code: {{ account.code }}</li>
+    <li>Name: {{ account.name }}</li>
+    <li>Type: {{ account.get_account_type_display }}</li>
+    <li>Description: {{ account.description }}</li>
+    <li>Active: {{ account.is_active }}</li>
+</ul>
+<a href="{% url 'accounting:chart_of_accounts_edit' account.pk %}">Edit</a> |
+<a href="{% url 'accounting:chart_of_accounts_delete' account.pk %}">Delete</a> |
+<a href="{% url 'accounting:chart_of_accounts_list' %}">Back to list</a>
+{% endblock %} 

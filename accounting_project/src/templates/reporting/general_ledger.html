@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>General Ledger</h1>
+<form method="get" class="mb-4">
+    <label>Account:
+        <select name="account">
+            <option value="">-- Select --</option>
+            {% for acc in accounts %}
+            <option value="{{ acc.pk }}" {% if selected_account and acc.pk == selected_account.pk %}selected{% endif %}>{{ acc.code }} - {{ acc.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Fiscal Year:
+        <select name="fiscal_year">
+            <option value="">-- Select --</option>
+            {% for fy in fiscal_years %}
+            <option value="{{ fy.pk }}">{{ fy.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Period:
+        <select name="period">
+            <option value="">-- All --</option>
+            {% for p in periods %}
+            <option value="{{ p.pk }}">{{ p.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <button type="submit">Filter</button>
+</form>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Date</th><th>Journal</th><th>Reference</th><th>Description</th><th>Debit</th><th>Credit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in entry_lines %}
+        <tr>
+            <td>{{ line.journal_entry.date }}</td>
+            <td>{{ line.journal_entry.journal }}</td>
+            <td>{{ line.journal_entry.reference }}</td>
+            <td>{{ line.description }}</td>
+            <td class="text-end">{{ line.debit_amount|floatformat:2 }}</td>
+            <td class="text-end">{{ line.credit_amount|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">No entries found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

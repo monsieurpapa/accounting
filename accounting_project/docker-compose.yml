@@ -1,0 +1,133 @@
+# /home/ubuntu/accounting_project/docker-compose.yml
+
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      # Use environment variables for sensitive data
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+        - "5432:5432"
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      # Only expose if direct access is needed for debugging
+      - "6379:6379"
+    healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+    # command: python src/manage.py runserver 0.0.0.0:8000 # For development
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - ./src:/app # Mount source code for development hot-reloading
+      - static_volume:/app/static # Volume for static files
+      - media_volume:/app/media   # Volume for media files
+    # ports: # Port exposed via HAProxy/Nginx, not directly
+      # - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - ./src:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      app:
+        condition: service_started # Worker needs app code and settings
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./src:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      app:
+        condition: service_started # Beat needs app code and settings
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+
+  haproxy:
+    build:
+      context: .
+      dockerfile: ./docker/haproxy/Dockerfile
+    # This service acts as an internal load balancer for Django app instances
+    # It doesn't need external ports if Nginx is the entry point
+    ports:
+      - "8080:8080" # Example if exposing HAProxy stats page or directly
+    depends_on:
+      - app # Depends on the Django app service(s) it balances
+    # Add healthcheck if needed~
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    ports:
+      - "80:80"
+      # - "443:443" # If handling HTTPS
+    depends_on:
+      - haproxy # Nginx forwards requests to HAProxy
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+

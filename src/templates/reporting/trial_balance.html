@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Balance de Vérification" %} | Système de Comptabilité{% endblock %}
+
+{% block page_title %}Balance de vérification{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'reporting:index' %}">Rapports</a></li>
+<li class="breadcrumb-item active" aria-current="page">Balance de vérification</li>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5 class="mb-0">{% trans "Balance de vérification" %}</h5>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'reporting:index' %}" class="btn btn-falcon-default btn-sm me-2">
+                    <span class="fas fa-arrow-left me-1"></span>{% trans "Back" %}
+                </a>
+                <div class="dropdown font-sans-serif d-inline-block">
+                    <button class="btn btn-falcon-default btn-sm dropdown-toggle" type="button" id="exportDropdown"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="fas fa-external-link-alt me-1"></span>{% trans "Exporter" %}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
+                        <div class="bg-white py-2">
+                            <a class="dropdown-item" href="#"><span class="far fa-file-pdf me-2"></span>PDF</a>
+                            <a class="dropdown-item" href="#"><span class="far fa-file-excel me-2"></span>Excel</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#"><span class="fas fa-print me-2"></span>Imprimer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border-top">
+        <!-- Report Parameters -->
+        <form id="reportForm" class="mb-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="fiscalYear" class="form-label fs--1">{% trans "Exercice fiscal" %}</label>
+                    <select class="form-select form-select-sm shadow-none" id="fiscalYear" required>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="period" class="form-label fs--1">{% trans "Période" %}</label>
+                    <select class="form-select form-select-sm shadow-none" id="period">
+                        <option value="">{% trans "Toutes les périodes" %}</option>
+                        <option value="1">Janvier 2025</option>
+                        <option value="2">Février 2025</option>
+                        <option value="3">Mars 2025</option>
+                        <option value="4">Avril 2025</option>
+                        <option value="5" selected>Mai 2025</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="accountRange" class="form-label fs--1">{% trans "Plage de comptes" %}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control shadow-none" id="accountRangeStart"
+                            placeholder="{% trans 'Début' %}">
+                        <span class="input-group-text bg-200">{% trans "à" %}</span>
+                        <input type="text" class="form-control shadow-none" id="accountRangeEnd"
+                            placeholder="{% trans 'Fin' %}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-falcon-primary btn-sm w-100">
+                        <span class="fas fa-search me-1"></span>{% trans "Générer" %}
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="border rounded-3 p-4 bg-white shadow-sm mb-4">
+            <div class="text-center mb-4">
+                <h4 class="text-900 fw-bold">HÔPITAL GÉNÉRAL DE RÉFÉRENCE</h4>
+                <h5 class="text-700">{% trans "Balance de vérification" %}</h5>
+                <p class="mb-0 fs--1">{% trans "Période" %}: Mai 2025</p>
+            </div>
+
+            <div class="table-responsive scrollbar">
+                <table class="table table-bordered table-striped mb-0 fs--1">
+                    <thead class="bg-200 text-900">
+                        <tr>
+                            <th rowspan="2" class="align-middle text-center">{% trans "Code" %}</th>
+                            <th rowspan="2" class="align-middle">{% trans "Intitulé du compte" %}</th>
+                            <th colspan="2" class="text-center border-bottom">{% trans "Soldes d'ouverture" %}</th>
+                            <th colspan="2" class="text-center border-bottom">{% trans "Mouvements de la période" %}
+                            </th>
+                            <th colspan="2" class="text-center border-bottom">{% trans "Soldes de clôture" %}</th>
+                        </tr>
+                        <tr>
+                            <th class="text-end border-start">{% trans "Débit" %}</th>
+                            <th class="text-end">{% trans "Crédit" %}</th>
+                            <th class="text-end border-start">{% trans "Débit" %}</th>
+                            <th class="text-end">{% trans "Crédit" %}</th>
+                            <th class="text-end border-start">{% trans "Débit" %}</th>
+                            <th class="text-end">{% trans "Crédit" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in report_data %}
+                        <tr>
+                            <td class="text-center fw-semi-bold">{{ row.code }}</td>
+                            <td>{{ row.name }}</td>
+                            <td class="text-end">{{ row.opening_debit|floatformat:2 }}</td>
+                            <td class="text-end">{{ row.opening_credit|floatformat:2 }}</td>
+                            <td class="text-end">{{ row.period_debit|floatformat:2 }}</td>
+                            <td class="text-end">{{ row.period_credit|floatformat:2 }}</td>
+                            <td class="text-end fw-bold">{{ row.closing_debit|floatformat:2 }}</td>
+                            <td class="text-end fw-bold">{{ row.closing_credit|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">{% trans "Aucune donnée disponible pour
+                                cette période." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-light fw-bold text-900">
+                        <tr>
+                            <td colspan="2" class="text-end text-uppercase">{% trans "Totaux" %}</td>
+                            <td class="text-end">{{ grand_totals.opening_debit|floatformat:2 }}</td>
+                            <td class="text-end">{{ grand_totals.opening_credit|floatformat:2 }}</td>
+                            <td class="text-end">{{ grand_totals.period_debit|floatformat:2 }}</td>
+                            <td class="text-end">{{ grand_totals.period_credit|floatformat:2 }}</td>
+                            <td class="text-end text-primary">{{ grand_totals.closing_debit|floatformat:2 }}</td>
+                            <td class="text-end text-primary">{{ grand_totals.closing_credit|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="row fs--1 text-700">
+            <div class="col-md-6">
+                <p class="mb-0"><strong>{% trans "Date de génération" %}:</strong> 27/05/2025</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <p class="mb-0"><strong>{% trans "Généré par" %}:</strong> {{ request.user.get_full_name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Print functionality
+    document.querySelector('.dropdown-item[href="#"][title="Imprimer"]').addEventListener('click', function (e) {
+        e.preventDefault();
+        window.print();
+    });
+
+    // Form submission
+    document.getElementById('reportForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        // In a real implementation, this would trigger an AJAX request to refresh the report
+        alert('Génération du rapport avec les nouveaux paramètres...');
+    });
+</script>
+{% endblock %}

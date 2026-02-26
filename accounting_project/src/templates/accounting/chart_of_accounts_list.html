@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Chart of Accounts</h1>
+<a href="{% url 'accounting:chart_of_accounts_create' %}">Create New Account</a>
+<table>
+    <tr>
+        <th>Code</th><th>Name</th><th>Type</th><th>Actions</th>
+    </tr>
+    {% for account in accounts %}
+    <tr>
+        <td>{{ account.code }}</td>
+        <td><a href="{% url 'accounting:chart_of_accounts_detail' account.pk %}">{{ account.name }}</a></td>
+        <td>{{ account.get_account_type_display }}</td>
+        <td>
+            <a href="{% url 'accounting:chart_of_accounts_edit' account.pk %}">Edit</a> |
+            <a href="{% url 'accounting:chart_of_accounts_delete' account.pk %}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %} 

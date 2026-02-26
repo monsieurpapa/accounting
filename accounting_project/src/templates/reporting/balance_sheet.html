@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Balance Sheet</h1>
+<form method="get" class="mb-4">
+    <label>Fiscal Year:
+        <select name="fiscal_year">
+            <option value="">-- Select --</option>
+            {% for fy in fiscal_years %}
+            <option value="{{ fy.pk }}" {% if current_fiscal_year and fy.pk == current_fiscal_year.pk %}selected{% endif %}>{{ fy.name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <button type="submit">Filter</button>
+</form>
+<div class="row">
+    <div class="col-md-6">
+        <h3>Assets</h3>
+        <table class="table table-bordered">
+            <thead><tr><th>Code</th><th>Name</th><th class="text-end">Balance</th></tr></thead>
+            <tbody>
+                {% for row in assets %}
+                <tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td class="text-end">{{ row.balance|floatformat:2 }}</td></tr>
+                {% endfor %}
+                <tr class="table-primary fw-bold"><td colspan="2">Total Assets</td><td class="text-end">{{ total_assets|floatformat:2 }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <h3>Liabilities</h3>
+        <table class="table table-bordered">
+            <thead><tr><th>Code</th><th>Name</th><th class="text-end">Balance</th></tr></thead>
+            <tbody>
+                {% for row in liabilities %}
+                <tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td class="text-end">{{ row.balance|floatformat:2 }}</td></tr>
+                {% endfor %}
+                <tr class="table-primary fw-bold"><td colspan="2">Total Liabilities</td><td class="text-end">{{ total_liabilities|floatformat:2 }}</td></tr>
+            </tbody>
+        </table>
+        <h3>Equity</h3>
+        <table class="table table-bordered">
+            <thead><tr><th>Code</th><th>Name</th><th class="text-end">Balance</th></tr></thead>
+            <tbody>
+                {% for row in equity %}
+                <tr><td>{{ row.code }}</td><td>{{ row.name }}</td><td class="text-end">{{ row.balance|floatformat:2 }}</td></tr>
+                {% endfor %}
+                <tr class="table-primary fw-bold"><td colspan="2">Total Equity</td><td class="text-end">{{ total_equity|floatformat:2 }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<p>Generated on: {{ generation_date }}</p>
+{% endblock %} 

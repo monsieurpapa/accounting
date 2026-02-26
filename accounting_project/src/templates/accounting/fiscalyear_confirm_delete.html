@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Delete Fiscal Year</h1>
+<p>Are you sure you want to delete fiscal year: {{ object }}?</p>
+<form method="post">{% csrf_token %}
+    <button type="submit">Confirm Delete</button>
+</form>
+<a href="{% url 'accounting:fiscalyear_list' %}">Cancel</a>
+{% endblock %} 

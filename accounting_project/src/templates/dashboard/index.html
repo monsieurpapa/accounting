@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord | Système de Comptabilité{% endblock %}
+
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Solde de trésorerie</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ cash_balance|default:"0.00" }} FC</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-coin fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Revenus (ce mois)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_revenue|default:"0.00" }} FC</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-up-arrow fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Dépenses (ce mois)</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_expenses|default:"0.00" }} FC</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-graph-down-arrow fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Écritures en attente</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_entries|default:"0" }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-journal-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions and Quick Actions -->
+<div class="row">
+    <!-- Recent Transactions -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Transactions récentes</h6>
+                <a href="{% url 'accounting:journal_entries' %}" class="btn btn-sm btn-primary">Voir tout</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Référence</th>
+                                <th>Description</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if recent_entries %}
+                                {% for entry in recent_entries %}
+                                <tr>
+                                    <td>{{ entry.date }}</td>
+                                    <td>{{ entry.reference }}</td>
+                                    <td>{{ entry.description|truncatechars:30 }}</td>
+                                    <td>{{ entry.amount }} FC</td>
+                                    <td>
+                                        {% if entry.posted %}
+                                        <span class="badge bg-success">Validé</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">En attente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Aucune transaction récente</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions and Fiscal Year Info -->
+    <div class="col-lg-4 mb-4">
+        <!-- Quick Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Actions rapides</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounting:journal_entry_create' %}" class="btn btn-primary">
+                        <i class="bi bi-journal-plus"></i> Nouvelle écriture
+                    </a>
+                    <a href="{% url 'reporting:trial_balance' %}" class="btn btn-info">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Balance de vérification
+                    </a>
+                    <a href="{% url 'accounting:chart_of_accounts' %}" class="btn btn-secondary">
+                        <i class="bi bi-list-ul"></i> Plan comptable
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fiscal Year Info Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Exercice fiscal en cours</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5>{{ current_fiscal_year.name|default:"Non défini" }}</h5>
+                    <p class="text-muted">
+                        {% if current_fiscal_year %}
+                            {{ current_fiscal_year.start_date|date:"d/m/Y" }} - {{ current_fiscal_year.end_date|date:"d/m/Y" }}
+                        {% else %}
+                            Aucun exercice fiscal défini
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <h6>Période comptable actuelle:</h6>
+                    <p>{{ current_period.name|default:"Non définie" }}</p>
+                </div>
+                <div class="progress mb-2">
+                    <div class="progress-bar" role="progressbar" data-progress="{{ fiscal_year_progress|default:0 }}" 
+                         aria-valuenow="{{ fiscal_year_progress|default:0 }}" aria-valuemin="0" aria-valuemax="100">
+                        {{ fiscal_year_progress|default:0 }}%
+                    </div>
+                </div>
+                <small class="text-muted">Progression de l'exercice fiscal</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'auth_layout.html' %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign In" %} | Système de Comptabilité{% endblock %}
+
+{% block auth_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block auth_content %}
+{% get_providers as socialaccount_providers %}
+
+{% if socialaccount_providers %}
+<div class="d-grid gap-2 mb-4">
+    {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+</div>
+
+<div class="position-relative mb-4">
+    <hr class="text-secondary">
+    <div class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-secondary small">
+        {% trans "OR" %}
+    </div>
+</div>
+{% endif %}
+
+<form class="login" method="POST" action="{% url 'account_login' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="id_login" class="form-label">{% trans "Email" %}</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" name="login" placeholder="{% trans 'Email Address' %}" autocomplete="email" maxlength="320" class="form-control" required id="id_login">
+        </div>
+        {% if form.login.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.login.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label for="id_password" class="form-label">{% trans "Password" %}</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" placeholder="{% trans 'Password' %}" autocomplete="current-password" class="form-control" required id="id_password">
+            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                <i class="bi bi-eye"></i>
+            </button>
+        </div>
+        {% if form.password.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in form.password.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="remember" id="id_remember">
+            <label class="form-check-label" for="id_remember">
+                {% trans "Remember Me" %}
+            </label>
+        </div>
+        <a class="small text-decoration-none" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+    </div>
+
+    {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+    {% endif %}
+
+    <div class="d-grid">
+        <button class="btn btn-primary btn-lg shadow-sm primaryAction" type="submit">{% trans "Sign In" %}</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<div class="small">
+    {% trans "Don't have an account?" %} <a href="{{ signup_url }}" class="text-primary fw-bold">{% trans "Sign Up" %}</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('id_password');
+        const icon = this.querySelector('i');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    });
+</script>
+{% endblock %}

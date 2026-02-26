@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Journal Detail</h1>
+<ul>
+    <li>Code: {{ journal.code }}</li>
+    <li>Name: {{ journal.name }}</li>
+    <li>Type: {{ journal.get_type_display }}</li>
+    <li>Active: {{ journal.is_active }}</li>
+</ul>
+<a href="{% url 'accounting:journal_edit' journal.pk %}">Edit</a> |
+<a href="{% url 'accounting:journal_delete' journal.pk %}">Delete</a> |
+<a href="{% url 'accounting:journal_list' %}">Back to list</a>
+{% endblock %} 

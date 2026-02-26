@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Journal Entry Detail</h1>
+<ul>
+    <li>Entry #: {{ entry.entry_number }}</li>
+    <li>Date: {{ entry.date }}</li>
+    <li>Journal: {{ entry.journal }}</li>
+    <li>Reference: {{ entry.reference }}</li>
+    <li>Description: {{ entry.description }}</li>
+    <li>Posted: {{ entry.posted }}</li>
+    <li>Total Debit: {{ entry.total_debit }}</li>
+    <li>Total Credit: {{ entry.total_credit }}</li>
+    <li>Is Balanced: {{ entry.is_balanced }}</li>
+</ul>
+<a href="{% url 'accounting:journal_entry_edit' entry.pk %}">Edit</a> |
+<a href="{% url 'accounting:journal_entry_delete' entry.pk %}">Delete</a> |
+<a href="{% url 'accounting:journal_entry_list' %}">Back to list</a>
+{% endblock %} 

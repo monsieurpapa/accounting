@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load socialaccount %}
+{% get_providers as socialaccount_providers %}
+
+{% for provider in socialaccount_providers %}
+{% if provider.id == "openid" %}
+{% for brand in provider.brands %}
+<a title="{{brand.name}}"
+    class="btn btn-outline-secondary d-flex align-items-center justify-content-center py-2 mb-2 socialaccount_provider {{provider.id}} {{brand.id}}"
+    href="{% provider_login_url provider.id openid=brand.openid_url process=process %}">
+    <i class="bi bi-person-badge me-2"></i>
+    <span>{{brand.name}}</span>
+</a>
+{% endfor %}
+{% endif %}
+
+<a title="{{provider.name}}"
+    class="btn btn-outline-{{ provider.id }} d-flex align-items-center justify-content-center py-2 mb-2 socialaccount_provider {{provider.id}}"
+    href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}">
+    {% if provider.id == 'google' %}
+    <i class="bi bi-google me-2"></i>
+    {% elif provider.id == 'github' %}
+    <i class="bi bi-github me-2"></i>
+    {% else %}
+    <i class="bi bi-shield-lock me-2"></i>
+    {% endif %}
+    <span>{{provider.name}}</span>
+</a>
+{% endfor %}
