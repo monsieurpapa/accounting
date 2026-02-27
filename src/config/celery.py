@@ -1,3 +1,10 @@
+"""
+Celery configuration for the Accounting System.
+
+Configures the Celery app with Django settings (CELERY_* namespace)
+and auto-discovers tasks from all registered Django apps.
+Broker and result backend are set via CELERY_BROKER_URL and CELERY_RESULT_BACKEND.
+"""
 import os
 from celery import Celery
 

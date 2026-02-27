@@ -1,103 +1,148 @@
-# Accounting Project
+# Accounting System
 
-## Overview
-A robust, extensible accounting system built with Django, supporting multi-organization fiscal management, double-entry bookkeeping, and comprehensive financial reporting. Designed for clarity, auditability, and ease of use for both technical and non-technical users.
+[![Django](https://img.shields.io/badge/Django-4.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A robust, extensible accounting system built with Django, supporting multi-organization fiscal management, double-entry bookkeeping (SYSCOHADA-compliant), and comprehensive financial reporting.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Development](#development)
+- [License](#license)
+
+---
 
 ## Features
-- Multi-organization support
-- Fiscal year and accounting period management
-- Chart of Accounts (SYSCOHADA-compliant)
-- Journals and Journal Entries (double-entry)
-- Entry Lines (debit/credit)
-- Trial Balance, General Ledger, Balance Sheet, Income Statement
-- Django admin integration
-- Fine-grained permissions and roles
-- Comprehensive test suite
 
-## Tech Stack
-- Python 3.10+
-- Django 4.x
-- SQLite (default, easily swappable)
-- Bootstrap (for templates)
+| Category | Capabilities |
+|----------|--------------|
+| **Accounting** | Chart of accounts (SYSCOHADA), fiscal years, periods, journals, journal entries, double-entry bookkeeping |
+| **Reporting** | Trial balance, general ledger, balance sheet, income statement |
+| **Budget** | Budgets, budget lines, commitments (purchase orders) |
+| **Cashflow** | Third parties, payments, receipts, bank reconciliation |
+| **Assets** | Fixed assets, depreciation methods, depreciation entries |
+| **Multi-tenant** | Organization-based isolation with role-based access control |
 
-## Setup Instructions
-1. **Clone the repository:**
-   ```bash
-   git clone <repo-url>
-   cd accounting_project
-   ```
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. **Apply migrations:**
-   ```bash
-   python manage.py migrate
-   ```
-5. **Create a superuser:**
-   ```bash
-   python manage.py createsuperuser
-   ```
-6. **Run the development server:**
-   ```bash
-   python manage.py runserver
-   ```
-7. **Access the app:**
-   - Main app: http://localhost:8000/
-   - Admin: http://localhost:8000/admin/
+---
 
-## Usage
-- **Admin:** Manage organizations, users, accounts, journals, entries, and periods.
-- **User-facing views:**
-  - Dashboard, Chart of Accounts, Journals, Journal Entries, Fiscal Years, Periods
-  - Reporting: Trial Balance, General Ledger, Balance Sheet, Income Statement
-- **Testing:**
-   ```bash
-   python manage.py test accounting
-   ```
+## Architecture
 
-## Permissions & Roles
-- Uses Django's built-in permissions system.
-- Sensitive actions (create/edit/delete/post) require appropriate permissions.
-- Staff and superusers have elevated access (e.g., posting entries, deleting fiscal years).
-- Assign permissions via the Django admin or custom user/group management.
-
-## App Structure
 ```
-src/
-  accounting/         # Core accounting logic (models, views, forms, admin, tests)
-  reporting/          # Financial reporting views and templates
-  templates/          # All HTML templates (accounting, reporting, dashboard, etc.)
-  users/, organization/, ... # Supporting apps
-  manage.py           # Django entry point
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Nginx     │────▶│  HAProxy    │────▶│   Django    │
+│  (Port 80)  │     │ (Load Bal.) │     │  (Gunicorn) │
+└─────────────┘     └─────────────┘     └──────┬──────┘
+                                               │
+                    ┌──────────────────────────┼──────────────────────────┐
+                    ▼                          ▼                          ▼
+             ┌─────────────┐            ┌─────────────┐            ┌─────────────┐
+             │ PostgreSQL  │            │    Redis    │            │   Celery    │
+             │   (db)      │            │   (broker)  │            │  Worker/Beat│
+             └─────────────┘            └─────────────┘            └─────────────┘
 ```
 
-## Key Models & Business Logic
-- **FiscalYear, AccountingPeriod:** Manage fiscal years and periods per organization.
-- **ChartOfAccounts:** Hierarchical account structure, supports all major account types.
-- **Journal, JournalEntry, EntryLine:** Double-entry bookkeeping, with posting/finalization logic.
-- **Permissions:** Enforced at both view and model level for all sensitive actions.
+**Tech Stack:** Django 4.2 · PostgreSQL 15 · Redis 7 · Celery · Gunicorn · Nginx · HAProxy
 
-## Reporting & Financial Statements
-- **Trial Balance:** Shows opening, period, and closing balances for all accounts.
-- **General Ledger:** Drill-down on all posted entry lines for any account.
-- **Balance Sheet:** Summarizes assets, liabilities, and equity for a fiscal year.
-- **Income Statement:** Summarizes revenues, expenses, and net income for a fiscal year.
+---
 
-## Contribution Guidelines
-- Fork the repo and create a feature branch.
-- Write clear, well-documented code and tests.
-- Follow PEP8 and Django best practices.
-- Submit a pull request with a clear description of your changes.
+## Quick Start
+
+### Using Docker (recommended)
+
+```bash
+# Clone the repository
+git clone <repo-url>
+cd accounting_project
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your SECRET_KEY, POSTGRES_PASSWORD, etc.
+
+# Start all services
+docker-compose up -d
+
+# Run migrations (first run)
+docker-compose exec app python manage.py migrate
+
+# Create superuser
+docker-compose exec app python manage.py createsuperuser
+```
+
+Access the application at **http://localhost** (Nginx) or **http://localhost:8080** (HAProxy).
+
+### Local development
+
+```bash
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables (or use .env)
+export DEBUG=True SECRET_KEY=dev-key-here
+
+# Run migrations (SQLite by default)
+python src/manage.py migrate
+
+# Create superuser
+python src/manage.py createsuperuser
+
+# Run development server
+python src/manage.py runserver 0.0.0.0:8000
+```
+
+Or use the Makefile:
+
+```bash
+make venv install migrate createsuperuser
+make run
+```
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, components, data flow, security |
+| [docs/SETUP.md](docs/SETUP.md) | Detailed setup: local, Docker, environment variables |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Development workflow, testing, code style, Makefile |
+| [docs/API.md](docs/API.md) | URL structure, views, and API overview |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Production deployment checklist and considerations |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines and pull request process |
+
+---
+
+## Development
+
+| Command | Description |
+|---------|-------------|
+| `make run` | Start development server |
+| `make test` | Run all tests |
+| `make migrate` | Apply database migrations |
+| `make shell` | Open Django shell |
+| `make lint` | Run flake8 linter |
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for full details.
+
+---
 
 ## License
-[MIT License](LICENSE)
 
-## Contact & Support
-- For issues, use the GitHub issue tracker.
-- For feature requests or questions, open an issue or contact the maintainers. # accounting
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Support
+
+- **Issues:** [GitHub Issue Tracker](https://github.com/your-org/accounting_project/issues)
+- **Contact:** See repository maintainers for support.
