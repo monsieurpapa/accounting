@@ -1,3 +1,4 @@
+{% extends 'base.html' %}
 {% load i18n %}
 {% block title %}{% trans "Bilan" %} | Système de Comptabilité{% endblock %}
 
@@ -10,12 +11,14 @@
             </div>
             <div class="col-auto">
                 <a href="{% url 'reporting:index' %}" class="btn btn-falcon-default btn-sm me-2">
-                    <span class="fas fa-arrow-left me-1"></span>{% trans "Back" %}
+                    <span class="fas fa-arrow-left me-1"></span>
+                    {% trans "Retour" %}
                 </a>
                 <div class="dropdown font-sans-serif d-inline-block">
                     <button class="btn btn-falcon-default btn-sm dropdown-toggle" type="button" id="exportDropdown"
                         data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="fas fa-external-link-alt me-1"></span>{% trans "Exporter" %}
+                        <span class="fas fa-external-link-alt me-1"></span>
+                        {% trans "Exporter" %}
                     </button>
                     <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
                         <div class="bg-white py-2">
@@ -37,7 +40,7 @@
                     <select name="fiscal_year" class="form-select form-select-sm shadow-none">
                         <option value="">-- {% trans "Sélectionner" %} --</option>
                         {% for fy in fiscal_years %}
-                        <option value="{{ fy.pk }}" {% if current_fiscal_year and fy.pk==current_fiscal_year.pk %}
+                        <option value="{{ fy.pk }}" {% if current_fiscal_year and fy.pk == current_fiscal_year.pk %}
                             selected {% endif %}>{{ fy.name }}
                         </option>
                         {% endfor %}
@@ -54,8 +57,9 @@
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="border rounded-3 p-3 bg-light">
-                    <h6 class="text-900 border-bottom pb-2 mb-3"><span class="fas fa-wallet me-2 text-primary"></span>{%
-                        trans "Actifs" %}</h6>
+                    <h6 class="text-900 border-bottom pb-2 mb-3"><span class="fas fa-wallet me-2 text-primary"></span>
+                        {% trans "Actifs" %}
+                    </h6>
                     <div class="table-responsive scrollbar">
                         <table class="table table-sm table-dashboard mb-0 fs--1">
                             <thead class="bg-200">
@@ -76,8 +80,9 @@
                             </tbody>
                             <tfoot class="bg-white fw-bold">
                                 <tr>
-                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">{% trans "Total Actifs"
-                                        %}</td>
+                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">
+                                        {% trans "Total Actifs" %}
+                                    </td>
                                     <td class="text-end px-3 text-primary">{{ total_assets|floatformat:2 }}</td>
                                 </tr>
                             </tfoot>
@@ -109,8 +114,9 @@
                             </tbody>
                             <tfoot class="bg-white fw-bold">
                                 <tr>
-                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">{% trans "Total Passifs"
-                                        %}</td>
+                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">
+                                        {% trans "Total Passifs" %}
+                                    </td>
                                     <td class="text-end px-3 text-warning">{{ total_liabilities|floatformat:2 }}</td>
                                 </tr>
                             </tfoot>
@@ -119,8 +125,9 @@
                 </div>
 
                 <div class="border rounded-3 p-3 bg-light">
-                    <h6 class="text-900 border-bottom pb-2 mb-3"><span class="fas fa-coins me-2 text-success"></span>{%
-                        trans "Capitaux Propres" %}</h6>
+                    <h6 class="text-900 border-bottom pb-2 mb-3"><span class="fas fa-coins me-2 text-success"></span>
+                        {% trans "Capitaux Propres" %}
+                    </h6>
                     <div class="table-responsive scrollbar">
                         <table class="table table-sm table-dashboard mb-0 fs--1">
                             <thead class="bg-200">
@@ -141,8 +148,9 @@
                             </tbody>
                             <tfoot class="bg-white fw-bold">
                                 <tr>
-                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">{% trans "Total Capitaux
-                                        Propres" %}</td>
+                                    <td colspan="2" class="text-end px-3 text-uppercase fs--2">
+                                        {% trans "Total Capitaux Propres" %}
+                                    </td>
                                     <td class="text-end px-3 text-success">{{ total_equity|floatformat:2 }}</td>
                                 </tr>
                             </tfoot>
@@ -153,7 +161,7 @@
         </div>
 
         <div class="mt-4 fs--1 text-700">
-            <p class="mb-0"><strong>{% trans "Généré le" %}:</strong> {{ generation_date|date:"d/m/Y H:i" }}</p>
+            <p class="mb-0"><strong>{% trans "Généré le" %}:</strong> {{ generation_date|date:"d/m/Y" }}</p>
         </div>
     </div>
 </div>

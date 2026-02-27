@@ -1,3 +1,4 @@
+{% extends 'base.html' %}
 {% load i18n %}
 {% block title %}{% trans "Grand Livre" %} | Système de Comptabilité{% endblock %}
 
@@ -37,8 +38,11 @@
                     <select name="account" class="form-select form-select-sm shadow-none">
                         <option value="">-- {% trans "Sélectionner" %} --</option>
                         {% for acc in accounts %}
-                        <option value="{{ acc.pk }}" {% if selected_account and acc.pk==selected_account.pk %}selected{%
-                            endif %}>{{ acc.code }} - {{ acc.name }}</option>
+                        <option value="{{ acc.pk }}" 
+                        {% if selected_account and acc.pk == selected_account.pk %} selected 
+                        {% endif %}
+                        >{{ acc.code }} - {{ acc.name }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
