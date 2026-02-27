@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Users | Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Users</h2>
+    <a href="{% url 'users:user_add' %}" class="btn btn-primary mb-2">Add user</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Organization</th>
+                <th>Role</th>
+                <th>Staff</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{% if user.profile.organization %}{{ user.profile.organization.name }}{% endif %}</td>
+                <td>{% if user.profile.role %}{{ user.profile.role.name }}{% endif %}</td>
+                <td>{{ user.is_staff }}</td>
+                <td>
+                    <a href="{% url 'users:user_detail' user.pk %}" class="btn btn-sm btn-info">View</a>
+                    <a href="{% url 'users:user_edit' user.pk %}" class="btn btn-sm btn-secondary">Edit</a>
+                    <a href="{% url 'users:user_delete' user.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">No users.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

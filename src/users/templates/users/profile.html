@@ -53,8 +53,11 @@
                             <div class="flex-1">
                                 <h6 class="mb-0">{% trans "Account Status" %}</h6>
                                 <p class="fs--2 mb-0 d-block text-success">
-                                    {% if user.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif
-                                    %}
+                                    {% if user.is_active %}
+                                        {% trans "Active" %}
+                                    {% else %}
+                                        {% trans "Inactive" %}
+                                    {% endif %}
                                 </p>
                             </div>
                         </a>
@@ -63,8 +66,11 @@
                             <div class="flex-1">
                                 <h6 class="mb-0">{% trans "Organization" %}</h6>
                                 <p class="fs--2 mb-0 d-block">
-                                    {% if user.profile.organization %}{{ user.profile.organization.name }}{% else %}-{%
-                                    endif %}
+                                    {% if user.profile.organization %}
+                                        {{ user.profile.organization.name }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
                                 </p>
                             </div>
                         </a>

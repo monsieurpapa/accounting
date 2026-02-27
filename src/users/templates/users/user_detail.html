@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}User Detail{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>User Detail</h2>
+    <div class="card mb-3">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Username</dt>
+                <dd class="col-sm-9">{{ user_obj.username }}</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ user_obj.email }}</dd>
+
+                <dt class="col-sm-3">First name</dt>
+                <dd class="col-sm-9">{{ user_obj.first_name }}</dd>
+
+                <dt class="col-sm-3">Last name</dt>
+                <dd class="col-sm-9">{{ user_obj.last_name }}</dd>
+
+                <dt class="col-sm-3">Organization</dt>
+                <dd class="col-sm-9">{% if profile and profile.organization %}{{ profile.organization.name }}{% else %}-{% endif %}</dd>
+
+                <dt class="col-sm-3">Role</dt>
+                <dd class="col-sm-9">{% if profile and profile.role %}{{ profile.role.name }}{% else %}-{% endif %}</dd>
+
+                <dt class="col-sm-3">Staff</dt>
+                <dd class="col-sm-9">{{ user_obj.is_staff }}</dd>
+
+                <dt class="col-sm-3">Active</dt>
+                <dd class="col-sm-9">{{ user_obj.is_active }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <a href="{% url 'users:user_edit' user_obj.pk %}" class="btn btn-secondary">Edit</a>
+    <a href="{% url 'users:user_delete' user_obj.pk %}" class="btn btn-danger">Delete</a>
+    <a href="{% url 'users:user_list' %}" class="btn btn-link">Back to list</a>
+</div>
+{% endblock %}

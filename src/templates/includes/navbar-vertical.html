@@ -118,6 +118,28 @@
                     </a>
                 </li>
 
+                {% if user.is_superuser %}
+                <li class="nav-divider">Administration</li>
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle {% if app_name in "users organization" %}active{% endif %}" href="#" id="adminDropdown" data-bs-toggle="collapse" data-bs-target="#adminMenu" aria-expanded="false" aria-controls="adminMenu">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon"><span class="fas fa-cogs fs-1"></span></span>
+                            <span class="nav-link-text ps-1">Admin</span>
+                        </div>
+                    </a>
+                    <div id="adminMenu" class="collapse">
+                        <ul class="nav flex-column ms-3">
+                            <li class="nav-item">
+                                <a class="nav-link {% if app_name == 'users' %}active{% endif %}" href="{% url 'users:user_list' %}">Users</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if app_name == 'organization' %}active{% endif %}" href="{% url 'organization:organization_list' %}">Organizations</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+                {% endif %}
+
                 <li class="nav-divider">System</li>
 
                 <li class="nav-item">

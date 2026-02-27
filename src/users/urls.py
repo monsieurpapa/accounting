@@ -5,5 +5,11 @@ app_name = 'users'
 
 urlpatterns = [
     path('profile/', views.profile, name='profile'),
-    path('signup/', views.signup, name='signup'),
+
+    # admin management
+    path('admin/users/', views.user_list, name='user_list'),
+    path('admin/users/add/', views.user_create, name='user_add'),
+    path('admin/users/<int:pk>/', views.user_detail, name='user_detail'),
+    path('admin/users/<int:pk>/edit/', views.user_update, name='user_edit'),
+    path('admin/users/<int:pk>/delete/', views.user_delete, name='user_delete'),
 ]
