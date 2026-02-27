@@ -1,0 +1,14 @@
+{% load i18n %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="helpPanel" aria-labelledby="helpPanelLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="helpPanelLabel">{% trans "Help & Tips" %}</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        {% block help_content %}
+        <p class="fs--1">{% trans "Context-sensitive help will appear here. Click the Help button on any page to view tips." %}</p>
+        <h6>{% trans "Getting Started" %}</h6>
+        <p class="fs--2">{% trans "Open the Dashboard to view summaries. Use the left navigation to access Accounting, Reporting, Budgets and Cash Flow." %}</p>
+        {% endblock %}
+    </div>
+</div>

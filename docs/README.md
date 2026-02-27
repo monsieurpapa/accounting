@@ -14,6 +14,7 @@ Documentation for the Accounting System.
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development workflow, testing, code style, Makefile |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment checklist and considerations |
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Contribution guidelines and pull request process |
+| [USER_GUIDE.md](USER_GUIDE.md) | Comprehensive user manual for accountants and non-accountants |
 
 ---
 

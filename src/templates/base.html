@@ -458,6 +458,30 @@
             });
         });
     </script>
+    </script>
+
+    <!-- Help floating button -->
+    <button class="btn btn-info help-floating" data-bs-toggle="offcanvas" data-bs-target="#helpPanel" aria-controls="helpPanel" title="Help">
+        <span class="fas fa-question"></span>
+    </button>
+
+    {% include 'includes/help_panel.html' %}
+
+    <style>
+        .help-floating {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 1100;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+
 </body>
 
 </html>
