@@ -20,10 +20,10 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
                         <div class="bg-white py-2">
-                            <a class="dropdown-item" href="#"><span class="far fa-file-pdf me-2"></span>PDF</a>
-                            <a class="dropdown-item" href="#"><span class="far fa-file-excel me-2"></span>Excel</a>
+                            <a class="dropdown-item {% if not selected_account %}disabled{% endif %}" href="{% if selected_account %}{{ export_pdf_url }}{% else %}#{% endif %}"><span class="far fa-file-pdf me-2"></span>PDF</a>
+                            <a class="dropdown-item {% if not selected_account %}disabled{% endif %}" href="{% if selected_account %}{{ export_excel_url }}{% else %}#{% endif %}"><span class="far fa-file-excel me-2"></span>Excel</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#"><span class="fas fa-print me-2"></span>Imprimer</a>
+                            <a class="dropdown-item" href="#" onclick="window.print(); return false;"><span class="fas fa-print me-2"></span>{% trans "Imprimer" %}</a>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,23 @@
 from django.shortcuts import render
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
 from accounting.models import ChartOfAccounts, JournalEntry, EntryLine, FiscalYear, AccountingPeriod
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from decimal import Decimal
 
 from core.mixins import _get_user_organization
+
+from .export_utils import (
+    export_pdf_general_ledger,
+    export_excel_general_ledger,
+    export_pdf_balance_sheet,
+    export_excel_balance_sheet,
+    export_pdf_income_statement,
+    export_excel_income_statement,
+    export_pdf_trial_balance,
+    export_excel_trial_balance,
+)
 
 
 def _require_organization(request):
@@ -16,6 +28,28 @@ def _require_organization(request):
             "You are not assigned to an organization. Contact an administrator."
         )
     return organization
+
+
+def _export_url(request, fmt):
+    """Build a URL for exporting the current report.
+
+    The resulting URL preserves all existing query parameters from the
+    original request except any existing ``format`` parameter, which is
+    replaced by ``fmt``.  This allows the templates to render a link that
+    points back to the same view but with ``?format=pdf`` or ``?format=xlsx``
+    appended.  If there are no query parameters other than ``format`` the
+    returned string will still include the leading ``?`` so that it can be
+    used directly in an ``href`` attribute.
+    """
+
+    # ``request.GET`` is a QueryDict which is immutable; make a copy so we
+    # can modify it safely.
+    params = request.GET.copy()
+    # drop any pre‑existing format parameter to avoid duplicates
+    params.pop('format', None)
+    params['format'] = fmt
+    query = params.urlencode()
+    return f"{request.path}?{query}" if query else request.path
 
 
 @login_required
@@ -33,21 +67,40 @@ def general_ledger(request):
     entry_lines = []
     selected_account = None
     periods = []
-    if selected_fiscal_year_id:
-        fiscal_year = FiscalYear.objects.filter(pk=selected_fiscal_year_id, organization=organization).first()
-        if fiscal_year:
-            periods = AccountingPeriod.objects.filter(fiscal_year=fiscal_year).order_by('start_date')
+    fiscal_year = FiscalYear.objects.filter(pk=selected_fiscal_year_id, organization=organization).first() if selected_fiscal_year_id else None
+    period = AccountingPeriod.objects.filter(pk=selected_period_id, fiscal_year__organization=organization).first() if selected_period_id else None
+    if selected_fiscal_year_id and fiscal_year:
+        periods = AccountingPeriod.objects.filter(fiscal_year=fiscal_year).order_by('start_date')
     if selected_account_id:
         selected_account = ChartOfAccounts.objects.filter(pk=selected_account_id, organization=organization).first()
         if selected_account:
             qs = EntryLine.objects.filter(account=selected_account, journal_entry__posted=True)
-            if selected_period_id:
-                period = AccountingPeriod.objects.filter(pk=selected_period_id, fiscal_year__organization=organization).first()
-                if period:
-                    qs = qs.filter(journal_entry__date__gte=period.start_date, journal_entry__date__lte=period.end_date)
-            elif selected_fiscal_year_id and fiscal_year:
+            if period:
+                qs = qs.filter(journal_entry__date__gte=period.start_date, journal_entry__date__lte=period.end_date)
+            elif fiscal_year:
                 qs = qs.filter(journal_entry__date__gte=fiscal_year.start_date, journal_entry__date__lte=fiscal_year.end_date)
             entry_lines = qs.select_related('journal_entry').order_by('journal_entry__date', 'id')
+    # Export formats (PDF/Excel)
+    export_format = request.GET.get('format')
+    if export_format == 'pdf' and selected_account:
+        content = export_pdf_general_ledger(
+            entry_lines, selected_account, timezone.now().date(),
+            fiscal_year=fiscal_year if selected_fiscal_year_id else None,
+            period=period if selected_period_id else None
+        )
+        resp = HttpResponse(content, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="general_ledger.pdf"'
+        return resp
+    if export_format == 'xlsx' and selected_account:
+        content = export_excel_general_ledger(
+            entry_lines, selected_account, timezone.now().date(),
+            fiscal_year=fiscal_year if selected_fiscal_year_id else None,
+            period=period if selected_period_id else None
+        )
+        resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="general_ledger.xlsx"'
+        return resp
+
     context = {
         'accounts': accounts,
         'fiscal_years': fiscal_years,
@@ -55,6 +108,8 @@ def general_ledger(request):
         'selected_account': selected_account,
         'entry_lines': entry_lines,
         'generation_date': timezone.now().date(),
+        'export_pdf_url': _export_url(request, 'pdf'),
+        'export_excel_url': _export_url(request, 'xlsx'),
     }
     return render(request, 'reporting/general_ledger.html', context)
 
@@ -105,6 +160,34 @@ def balance_sheet(request):
                 equity_accounts.append({'code': acc.code, 'name': acc.name, 'balance': balance})
                 total_equity += balance
 
+    fiscal_years = FiscalYear.objects.filter(organization=organization).order_by('-start_date')
+    current_fiscal_year = FiscalYear.objects.filter(
+        organization=organization,
+        start_date__lte=as_of_date,
+        end_date__gte=as_of_date
+    ).first()
+
+    # Export formats (PDF/Excel)
+    export_format = request.GET.get('format')
+    if export_format == 'pdf':
+        content = export_pdf_balance_sheet(
+            asset_accounts, liability_accounts, equity_accounts,
+            total_assets, total_liabilities, total_equity,
+            as_of_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="balance_sheet.pdf"'
+        return resp
+    if export_format == 'xlsx':
+        content = export_excel_balance_sheet(
+            asset_accounts, liability_accounts, equity_accounts,
+            total_assets, total_liabilities, total_equity,
+            as_of_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="balance_sheet.xlsx"'
+        return resp
+
     context = {
         'as_of_date': as_of_date,
         'assets': asset_accounts,
@@ -114,12 +197,16 @@ def balance_sheet(request):
         'total_liabilities': total_liabilities,
         'total_equity': total_equity,
         'generation_date': timezone.now().date(),
+        'fiscal_years': fiscal_years,
+        'current_fiscal_year': current_fiscal_year,
+        'export_pdf_url': _export_url(request, 'pdf'),
+        'export_excel_url': _export_url(request, 'xlsx'),
     }
     return render(request, 'reporting/balance_sheet.html', context)
 
 @login_required
 def income_statement(request):
-    organization = request.user.profile.organization
+    organization = _require_organization(request)
     fiscal_year_id = request.GET.get('fiscal_year')
     period_id = request.GET.get('period')
     
@@ -182,6 +269,29 @@ def income_statement(request):
 
     net_income = total_revenue - total_expenses
 
+    fiscal_years = FiscalYear.objects.filter(organization=organization).order_by('-start_date')
+
+    # Export formats (PDF/Excel)
+    export_format = request.GET.get('format')
+    if export_format == 'pdf' and start_date and end_date:
+        content = export_pdf_income_statement(
+            revenue_accounts, expense_accounts,
+            total_revenue, total_expenses, net_income,
+            start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="income_statement.pdf"'
+        return resp
+    if export_format == 'xlsx' and start_date and end_date:
+        content = export_excel_income_statement(
+            revenue_accounts, expense_accounts,
+            total_revenue, total_expenses, net_income,
+            start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="income_statement.xlsx"'
+        return resp
+
     context = {
         'fiscal_year': fiscal_year,
         'period': period,
@@ -193,6 +303,10 @@ def income_statement(request):
         'total_expense': total_expenses,
         'net_income': net_income,
         'generation_date': timezone.now().date(),
+        'fiscal_years': fiscal_years,
+        'current_fiscal_year': fiscal_year,
+        'export_pdf_url': _export_url(request, 'pdf'),
+        'export_excel_url': _export_url(request, 'xlsx'),
     }
     return render(request, 'reporting/income_statement.html', context)
 
@@ -292,9 +406,39 @@ def trial_balance(request):
             grand_total_closing_debit += closing_debit
             grand_total_closing_credit += closing_credit
 
+    fiscal_years = FiscalYear.objects.filter(organization=organization).order_by('-start_date')
+
+    # Export formats (PDF/Excel)
+    export_format = request.GET.get('format')
+    if export_format == 'pdf' and start_date and end_date:
+        content = export_pdf_trial_balance(
+            report_data,
+            {'opening_debit': grand_total_opening_debit, 'opening_credit': grand_total_opening_credit,
+             'period_debit': grand_total_period_debit, 'period_credit': grand_total_period_credit,
+             'closing_debit': grand_total_closing_debit, 'closing_credit': grand_total_closing_credit},
+            fiscal_year, period, start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="trial_balance.pdf"'
+        return resp
+    if export_format == 'xlsx' and start_date and end_date:
+        content = export_excel_trial_balance(
+            report_data,
+            {'opening_debit': grand_total_opening_debit, 'opening_credit': grand_total_opening_credit,
+             'period_debit': grand_total_period_debit, 'period_credit': grand_total_period_credit,
+             'closing_debit': grand_total_closing_debit, 'closing_credit': grand_total_closing_credit},
+            fiscal_year, period, start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="trial_balance.xlsx"'
+        return resp
+
+    periods = AccountingPeriod.objects.filter(fiscal_year=fiscal_year).order_by('start_date') if fiscal_year else []
+
     context = {
         'fiscal_year': fiscal_year,
         'period': period,
+        'periods': periods,
         'report_data': report_data,
         'grand_totals': {
             'opening_debit': grand_total_opening_debit,
@@ -304,7 +448,9 @@ def trial_balance(request):
             'closing_debit': grand_total_closing_debit,
             'closing_credit': grand_total_closing_credit,
         },
-        'fiscal_years': FiscalYear.objects.filter(organization=organization).order_by('-start_date'),
+        'fiscal_years': fiscal_years,
         'generation_date': timezone.now().date(),
+        'export_pdf_url': _export_url(request, 'pdf'),
+        'export_excel_url': _export_url(request, 'xlsx'),
     }
     return render(request, 'reporting/trial_balance.html', context)
