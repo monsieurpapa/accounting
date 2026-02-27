@@ -144,9 +144,16 @@ The Accounting System is a multi-tenant Django application for fiscal management
 
 ### Sensitive Operations
 
-- Posting journal entries: `permission_required('accounting.post_journalentry')` or equivalent
-- Deleting fiscal years: staff/superuser only
-- Closing periods: restricted by role
+| Action | Restriction |
+|--------|-------------|
+| Post journal entry | Role: Senior Accountant, Admin (or staff/superuser) |
+| Create/Update/Delete fiscal year | Role: Admin (or staff/superuser) |
+| Create/Update/Delete accounting period | Role: Admin (or staff/superuser) |
+| Close accounting period | Role: Admin, Senior Accountant (or staff/superuser) |
+| Create bank reconciliation | Role: Senior Accountant, Admin (or staff/superuser) |
+| Create/Update/Delete journal entry | Django permission: `accounting.add/change/delete_journalentry` |
+
+Staff and superusers bypass role checks and can perform all role-restricted actions. Users must have a profile with an organization to access tenant-scoped data; otherwise they get PermissionDenied.
 
 ---
 

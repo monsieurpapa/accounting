@@ -1,8 +1,22 @@
 from django.shortcuts import render
+from django.core.exceptions import PermissionDenied
 from accounting.models import ChartOfAccounts, JournalEntry, EntryLine, FiscalYear, AccountingPeriod
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from decimal import Decimal
+
+from core.mixins import _get_user_organization
+
+
+def _require_organization(request):
+    """Return the user's organization or raise PermissionDenied if not set."""
+    organization = _get_user_organization(request.user)
+    if organization is None:
+        raise PermissionDenied(
+            "You are not assigned to an organization. Contact an administrator."
+        )
+    return organization
+
 
 @login_required
 def reporting_index(request):
@@ -10,7 +24,7 @@ def reporting_index(request):
 
 @login_required
 def general_ledger(request):
-    organization = request.user.profile.organization
+    organization = _require_organization(request)
     accounts = ChartOfAccounts.objects.filter(organization=organization).order_by('code')
     fiscal_years = FiscalYear.objects.filter(organization=organization).order_by('-start_date')
     selected_account_id = request.GET.get('account')
@@ -46,7 +60,7 @@ def general_ledger(request):
 
 @login_required
 def balance_sheet(request):
-    organization = request.user.profile.organization
+    organization = _require_organization(request)
     as_of_date = request.GET.get('date', timezone.now().date())
     if isinstance(as_of_date, str):
         from datetime import datetime
@@ -184,7 +198,7 @@ def income_statement(request):
 
 @login_required
 def trial_balance(request):
-    organization = request.user.profile.organization
+    organization = _require_organization(request)
     fiscal_year_id = request.GET.get('fiscal_year')
     period_id = request.GET.get('period')
     

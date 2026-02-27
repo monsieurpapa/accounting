@@ -64,8 +64,8 @@ class BankReconciliationCreateView(RoleRequiredMixin, CreateView):
     form_class = BankReconciliationForm
     template_name = 'cashflow/bankreconciliation_form.html'
     success_url = reverse_lazy('cashflow:bankreconciliation_list')
-    role_required = 'Senior Accountant'
-    
+    required_roles = ['Senior Accountant', 'Admin']
+
     def form_valid(self, form):
         response = super().form_valid(form)
         self.object.calculate_balances()

@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Session expired (403) | Accounting Portal</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{% static 'assets/css/theme.min.css' %}" rel="stylesheet">
+    <style>
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%); font-family: 'Inter', sans-serif; }
+        .error-card { max-width: 440px; border: none; border-radius: 0.75rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,.08); }
+        .error-icon { width: 64px; height: 64px; background: rgba(230, 55, 87, 0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-11 col-sm-10">
+                <div class="card error-card">
+                    <div class="card-body text-center py-5 px-4">
+                        <div class="error-icon mx-auto">
+                            <span class="fas fa-clock fa-2x text-danger"></span>
+                        </div>
+                        <h2 class="h5 text-900 mb-2">Request could not be completed</h2>
+                        <p class="text-700 mb-4">
+                            Your session may have expired or the form was open too long.
+                            Please go back, refresh the page, and try again. If the problem continues, log in again.
+                        </p>
+                        <a href="{% url 'accounting:dashboard' %}" class="btn btn-primary me-2">Go to dashboard</a>
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary">Go back</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'vendors/fontawesome/all.min.js' %}"></script>
+</body>
+</html>

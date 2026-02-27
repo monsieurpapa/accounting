@@ -9,7 +9,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from core.mixins import TenantAccessMixin, RoleRequiredMixin
+from core.mixins import TenantAccessMixin, RoleRequiredMixin, _get_user_organization
 
 
 def journals(request):
@@ -22,8 +22,12 @@ def journal_entries(request):
 @login_required
 def journal_entry_create(request):
     """View for creating a new journal entry."""
-    # Get user's organization
-    organization = request.user.profile.organization
+    organization = _get_user_organization(request.user)
+    if organization is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied(
+            "You are not assigned to an organization. Contact an administrator."
+        )
     
     # Get all accounts for this organization for the form
     accounts = ChartOfAccounts.objects.filter(
@@ -47,15 +51,23 @@ def journal_entry_create(request):
 @permission_required('accounting.change_journalentry', raise_exception=True)
 @login_required
 def journal_entry_edit(request, uuid):
-    # Placeholder for edit logic using uuid
-    entry = get_object_or_404(JournalEntry, uuid=uuid, organization=request.user.profile.organization)
+    organization = _get_user_organization(request.user)
+    if organization is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("You are not assigned to an organization.")
+    entry = get_object_or_404(JournalEntry, uuid=uuid, organization=organization)
+    # TODO: implement edit logic
     pass
 
 @permission_required('accounting.delete_journalentry', raise_exception=True)
 @login_required
 def journal_entry_delete(request, uuid):
-    # Placeholder for delete logic using uuid
-    entry = get_object_or_404(JournalEntry, uuid=uuid, organization=request.user.profile.organization)
+    organization = _get_user_organization(request.user)
+    if organization is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("You are not assigned to an organization.")
+    entry = get_object_or_404(JournalEntry, uuid=uuid, organization=organization)
+    # TODO: implement delete logic
     pass
 
 def chart_of_accounts(request):
@@ -67,8 +79,12 @@ def trial_balance(request):
 @login_required
 def dashboard(request):
     """Dashboard view showing summary information and recent transactions."""
-    # Get user's organization
-    organization = request.user.profile.organization
+    organization = _get_user_organization(request.user)
+    if organization is None:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied(
+            "You are not assigned to an organization. Contact an administrator."
+        )
     
     # Get current fiscal year and period
     current_fiscal_year = FiscalYear.objects.filter(
@@ -260,11 +276,13 @@ class JournalEntryListView(TenantAccessMixin, ListView):
     template_name = 'accounting/journal_entries.html'
     context_object_name = 'journal_entries'
 
+@method_decorator(permission_required('accounting.add_journalentry', raise_exception=True), name='dispatch')
 class JournalEntryCreateView(TenantAccessMixin, CreateView):
     model = JournalEntry
     form_class = JournalEntryForm
     template_name = 'accounting/journal_entry_form.html'
     success_url = reverse_lazy('accounting:journal_entry_list')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
@@ -284,6 +302,7 @@ class JournalEntryCreateView(TenantAccessMixin, CreateView):
             return redirect(self.success_url)
         return self.form_invalid(form)
 
+@method_decorator(permission_required('accounting.change_journalentry', raise_exception=True), name='dispatch')
 class JournalEntryUpdateView(TenantAccessMixin, UpdateView):
     model = JournalEntry
     form_class = JournalEntryForm
@@ -291,6 +310,7 @@ class JournalEntryUpdateView(TenantAccessMixin, UpdateView):
     success_url = reverse_lazy('accounting:journal_entry_list')
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+
     def get_queryset(self):
         return super().get_queryset().filter(posted=False)
     def get_context_data(self, **kwargs):
@@ -310,6 +330,7 @@ class JournalEntryUpdateView(TenantAccessMixin, UpdateView):
             return redirect(self.success_url)
         return self.form_invalid(form)
 
+@method_decorator(permission_required('accounting.delete_journalentry', raise_exception=True), name='dispatch')
 class JournalEntryDeleteView(TenantAccessMixin, DeleteView):
     model = JournalEntry
     template_name = 'accounting/journal_entry_confirm_delete.html'
@@ -441,10 +462,11 @@ class AccountingPeriodDetailView(TenantAccessMixin, DetailView):
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
 
-class AccountingPeriodCloseView(TenantAccessMixin, DetailView):
+class AccountingPeriodCloseView(RoleRequiredMixin, TenantAccessMixin, DetailView):
     model = AccountingPeriod
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
+    required_roles = ['Admin', 'Senior Accountant']
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
