@@ -271,10 +271,18 @@ class EntryLine(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         # US 9.1: Integrity check for debit/credit
-        if not self.debit_amount and not self.credit_amount:
+        # Treat `None` as missing; allow explicit zero amounts (0.00) when needed.
+        if self.debit_amount is None and self.credit_amount is None:
             raise ValidationError(_("Each line must have either a debit or a credit amount."))
-        if self.debit_amount and self.credit_amount:
-            raise ValidationError(_("A single line cannot have both a debit and a credit amount."))
+        # If both values are provided and both are non-zero, that's not allowed.
+        if self.debit_amount is not None and self.credit_amount is not None:
+            try:
+                # Decimal comparison: allow cases where both are explicitly 0.00
+                if self.debit_amount != 0 and self.credit_amount != 0:
+                    raise ValidationError(_("A single line cannot have both a debit and a credit amount."))
+            except Exception:
+                # In case of unexpected types, fallback to strict validation
+                raise ValidationError(_("A single line cannot have both a debit and a credit amount."))
         
         # US 9.1: Prevent modification if parent entry is posted or period is closed
         if self.journal_entry:

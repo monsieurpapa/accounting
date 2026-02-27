@@ -104,3 +104,49 @@ This document outlines production deployment considerations for the Accounting S
 - **Error tracking**: Integrate Sentry or similar for exception reporting
 - **Health endpoint**: Add `/health/` or `/ping/` for load balancer checks
 - **Celery**: Monitor worker and beat; set up alerts for failed tasks
+
+---
+
+## Quick Production Runbook (example)
+
+1. Pull latest image or update code on deployment host.
+2. Switch to maintenance mode (brief downtime) or prepare canary.
+3. Build and start containers:
+
+```bash
+docker compose pull
+docker compose up -d --build
+```
+
+4. Run database migrations:
+
+```bash
+docker compose exec app python src/manage.py migrate --noinput
+```
+
+5. Collect static assets:
+
+```bash
+docker compose exec app python src/manage.py collectstatic --noinput
+```
+
+6. Run health checks and smoke tests (automated):
+
+```bash
+# from CI or deployment host
+curl -fSsf https://yourdomain/health/ || exit 1
+# Run a few application-level smoke tests (login, create journal entry, report)
+```
+
+7. If canary looks good, promote to full traffic and monitor metrics for 24–72 hours.
+
+### Rollback (if needed)
+
+1. Roll back to previous container image or tag.
+2. If DB migration is irreversible, restore DB from backup snapshot taken before deployment.
+3. Notify stakeholders and open incident ticket for post-mortem.
+
+### Notes
+- Always take a DB backup or snapshot before running migrations in production.
+- Automate the smoke tests as part of the deployment pipeline for safety.
+
