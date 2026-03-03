@@ -29,7 +29,11 @@ urlpatterns = [
     path('users/', include(('users.urls', 'users'), namespace='users')),
     path('organization/', include(('organization.urls', 'organization'), namespace='organization')),
     path('cashflow/', include(('cashflow.urls', 'cashflow'), namespace='cashflow')),
+    path('assets/', include(('assets.urls', 'assets'), namespace='assets')),
+    path('inventory/', include(('inventory.urls', 'inventory'), namespace='inventory')),
+    path('invoicing/', include(('invoicing.urls', 'invoicing'), namespace='invoicing')),
     path('', include(('accounting.urls', 'accounting'), namespace='accounting')),
+
     # Error page URLs (for testing and direct access; handlers used when errors occur)
     path('error/404/', error_page_404),
     path('error/403/', error_page_403),

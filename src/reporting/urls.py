@@ -9,4 +9,6 @@ urlpatterns = [
     path('balance-sheet/', views.balance_sheet, name='balance_sheet'),
     path('income-statement/', views.income_statement, name='income_statement'),
     path('trial-balance/', views.trial_balance, name='trial_balance'),
+    path('cash-flow-statement/', views.cash_flow_statement, name='cash_flow_statement'),
 ]
+

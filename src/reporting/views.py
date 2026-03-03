@@ -11,13 +11,23 @@ from core.mixins import _get_user_organization
 from .export_utils import (
     export_pdf_general_ledger,
     export_excel_general_ledger,
+    export_csv_general_ledger,
     export_pdf_balance_sheet,
     export_excel_balance_sheet,
+    export_csv_balance_sheet,
     export_pdf_income_statement,
     export_excel_income_statement,
+    export_csv_income_statement,
     export_pdf_trial_balance,
     export_excel_trial_balance,
+    export_csv_trial_balance,
+    export_pdf_cash_flow,
+    export_excel_cash_flow,
+    export_csv_cash_flow,
 )
+
+
+
 
 
 def _require_organization(request):
@@ -100,6 +110,16 @@ def general_ledger(request):
         resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         resp['Content-Disposition'] = 'attachment; filename="general_ledger.xlsx"'
         return resp
+    if export_format == 'csv' and selected_account:
+        content = export_csv_general_ledger(
+            entry_lines, selected_account, timezone.now().date(),
+            fiscal_year=fiscal_year if selected_fiscal_year_id else None,
+            period=period if selected_period_id else None
+        )
+        resp = HttpResponse(content, content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="general_ledger.csv"'
+        return resp
+
 
     context = {
         'accounts': accounts,
@@ -110,6 +130,8 @@ def general_ledger(request):
         'generation_date': timezone.now().date(),
         'export_pdf_url': _export_url(request, 'pdf'),
         'export_excel_url': _export_url(request, 'xlsx'),
+        'export_csv_url': _export_url(request, 'csv'),
+
     }
     return render(request, 'reporting/general_ledger.html', context)
 
@@ -187,6 +209,16 @@ def balance_sheet(request):
         resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         resp['Content-Disposition'] = 'attachment; filename="balance_sheet.xlsx"'
         return resp
+    if export_format == 'csv':
+        content = export_csv_balance_sheet(
+            asset_accounts, liability_accounts, equity_accounts,
+            total_assets, total_liabilities, total_equity,
+            as_of_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="balance_sheet.csv"'
+        return resp
+
 
     context = {
         'as_of_date': as_of_date,
@@ -201,7 +233,9 @@ def balance_sheet(request):
         'current_fiscal_year': current_fiscal_year,
         'export_pdf_url': _export_url(request, 'pdf'),
         'export_excel_url': _export_url(request, 'xlsx'),
+        'export_csv_url': _export_url(request, 'csv'),
     }
+
     return render(request, 'reporting/balance_sheet.html', context)
 
 @login_required
@@ -291,6 +325,16 @@ def income_statement(request):
         resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         resp['Content-Disposition'] = 'attachment; filename="income_statement.xlsx"'
         return resp
+    if export_format == 'csv' and start_date and end_date:
+        content = export_csv_income_statement(
+            revenue_accounts, expense_accounts,
+            total_revenue, total_expenses, net_income,
+            start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="income_statement.csv"'
+        return resp
+
 
     context = {
         'fiscal_year': fiscal_year,
@@ -307,7 +351,9 @@ def income_statement(request):
         'current_fiscal_year': fiscal_year,
         'export_pdf_url': _export_url(request, 'pdf'),
         'export_excel_url': _export_url(request, 'xlsx'),
+        'export_csv_url': _export_url(request, 'csv'),
     }
+
     return render(request, 'reporting/income_statement.html', context)
 
 @login_required
@@ -432,6 +478,18 @@ def trial_balance(request):
         resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         resp['Content-Disposition'] = 'attachment; filename="trial_balance.xlsx"'
         return resp
+    if export_format == 'csv' and start_date and end_date:
+        content = export_csv_trial_balance(
+            report_data,
+            {'opening_debit': grand_total_opening_debit, 'opening_credit': grand_total_opening_credit,
+             'period_debit': grand_total_period_debit, 'period_credit': grand_total_period_credit,
+             'closing_debit': grand_total_closing_debit, 'closing_credit': grand_total_closing_credit},
+            fiscal_year, period, start_date, end_date, timezone.now().date()
+        )
+        resp = HttpResponse(content, content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="trial_balance.csv"'
+        return resp
+
 
     periods = AccountingPeriod.objects.filter(fiscal_year=fiscal_year).order_by('start_date') if fiscal_year else []
 
@@ -452,5 +510,140 @@ def trial_balance(request):
         'generation_date': timezone.now().date(),
         'export_pdf_url': _export_url(request, 'pdf'),
         'export_excel_url': _export_url(request, 'xlsx'),
+        'export_csv_url': _export_url(request, 'csv'),
     }
+
     return render(request, 'reporting/trial_balance.html', context)
+
+
+@login_required
+def cash_flow_statement(request):
+    organization = _require_organization(request)
+    
+    fiscal_year_id = request.GET.get('fiscal_year')
+    period_id = request.GET.get('period')
+    
+    fiscal_year = None
+    period = None
+    
+    if fiscal_year_id:
+        fiscal_year = FiscalYear.objects.filter(organization=organization, pk=fiscal_year_id).first()
+    if period_id:
+        period = AccountingPeriod.objects.filter(fiscal_year__organization=organization, pk=period_id).first()
+        
+    if period:
+        start_date, end_date = period.start_date, period.end_date
+    elif fiscal_year:
+        start_date, end_date = fiscal_year.start_date, fiscal_year.end_date
+    else:
+        # Default to current month
+        today = timezone.now().date()
+        start_date = today.replace(day=1)
+        end_date = today
+        
+    # Query lines for the period
+    lines = EntryLine.objects.filter(
+        journal_entry__organization=organization,
+        journal_entry__posted=True,
+        journal_entry__date__range=[start_date, end_date]
+    ).select_related('account')
+
+    # Cash Flow Logic (Direct Method simplified)
+    # 1. Operating: Receipts from customers, Payments to suppliers/employees
+    # 2. Investing: Purchase/Sale of assets
+    # 3. Financing: Loans, Equity changes
+
+    report_data = {
+        'operating': {'in': Decimal('0'), 'out': Decimal('0'), 'net': Decimal('0')},
+        'investing': {'in': Decimal('0'), 'out': Decimal('0'), 'net': Decimal('0')},
+        'financing': {'in': Decimal('0'), 'out': Decimal('0'), 'net': Decimal('0')},
+        'summary': {'beginning': Decimal('0'), 'net_change': Decimal('0'), 'ending': Decimal('0')}
+    }
+
+    # Identify Cash Accounts (typically starting with 5 in OHADA)
+    cash_lines = lines.filter(account__code__startswith='5')
+    
+    for line in cash_lines:
+        je = line.journal_entry
+        # If cash is debited, it's an inflow. If credited, an outflow.
+        amount = line.debit_amount - line.credit_amount
+        
+        # Determine activity by looking at the OTHER lines in the same transaction
+        other_lines = je.lines.exclude(account__code__startswith='5')
+        
+        # Simplification: guess activity by the first non-cash account type
+        if other_lines.exists():
+            other_acc = other_lines.first().account
+            if other_acc.account_type in ['REVENUE', 'EXPENSE']:
+                category = 'operating'
+            elif other_acc.account_type == 'ASSET': # Fixed assets usually
+                category = 'investing'
+            else:
+                category = 'financing'
+        else:
+            category = 'operating' # Fallback
+            
+        if amount > 0:
+            report_data[category]['in'] += amount
+        else:
+            report_data[category]['out'] += abs(amount)
+            
+    # Calculate nets
+    for cat in ['operating', 'investing', 'financing']:
+        report_data[cat]['net'] = report_data[cat]['in'] - report_data[cat]['out']
+        
+    report_data['summary']['net_change'] = (
+        report_data['operating']['net'] + 
+        report_data['investing']['net'] + 
+        report_data['financing']['net']
+    )
+    
+    # Beginning cash (Balance of class 5 before start_date)
+    beginning_balance = EntryLine.objects.filter(
+        journal_entry__organization=organization,
+        journal_entry__posted=True,
+        journal_entry__date__lt=start_date,
+        account__code__startswith='5'
+    ).aggregate(
+        total=models.Sum(models.F('debit_amount') - models.F('credit_amount'))
+    )['total'] or Decimal('0')
+    
+    report_data['summary']['beginning'] = beginning_balance
+    report_data['summary']['ending'] = beginning_balance + report_data['summary']['net_change']
+
+    # Export
+    export_format = request.GET.get('format')
+    if export_format == 'pdf':
+        content = export_pdf_cash_flow(report_data, start_date, end_date, timezone.now().date())
+        resp = HttpResponse(content, content_type='application/pdf')
+        resp['Content-Disposition'] = 'attachment; filename="cash_flow.pdf"'
+        return resp
+    elif export_format == 'xlsx':
+        content = export_excel_cash_flow(report_data, start_date, end_date, timezone.now().date())
+        resp = HttpResponse(content, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        resp['Content-Disposition'] = 'attachment; filename="cash_flow.xlsx"'
+        return resp
+    elif export_format == 'csv':
+        content = export_csv_cash_flow(report_data, start_date, end_date, timezone.now().date())
+        resp = HttpResponse(content, content_type='text/csv')
+        resp['Content-Disposition'] = 'attachment; filename="cash_flow.csv"'
+        return resp
+
+
+    fiscal_years = FiscalYear.objects.filter(organization=organization).order_by('-start_date')
+    periods = AccountingPeriod.objects.filter(fiscal_year=fiscal_year).order_by('start_date') if fiscal_year else []
+
+    context = {
+        'fiscal_year': fiscal_year,
+        'period': period,
+        'report_data': report_data,
+        'fiscal_years': fiscal_years,
+        'periods': periods,
+        'generation_date': timezone.now().date(),
+        'export_pdf_url': _export_url(request, 'pdf'),
+        'export_excel_url': _export_url(request, 'xlsx'),
+        'export_csv_url': _export_url(request, 'csv'),
+    }
+
+    return render(request, 'reporting/cash_flow.html', context)
+

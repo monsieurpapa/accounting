@@ -250,7 +250,27 @@ class JournalEntry(models.Model):
         # Use Decimal comparison for accuracy
         return self.total_debit == self.total_credit
 
+class Project(models.Model):
+    """Represents a project or service for analytical tracking."""
+    organization = models.ForeignKey("organization.Organization", on_delete=models.CASCADE, related_name="projects")
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    code = models.CharField(_("Project Code"), max_length=50)
+    name = models.CharField(_("Project Name"), max_length=255)
+    description = models.TextField(_("Description"), blank=True, null=True)
+    is_active = models.BooleanField(_("Is Active"), default=True)
+
+    class Meta:
+        verbose_name = _("Project")
+        verbose_name_plural = _("Projects")
+        unique_together = [("organization", "code")]
+        ordering = ["code"]
+        app_label = 'accounting'
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
 class EntryLine(models.Model):
+
     """Represents a line item within a Journal Entry."""
     journal_entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name="lines")
     account = models.ForeignKey(ChartOfAccounts, on_delete=models.PROTECT, related_name="entry_lines")
@@ -260,7 +280,8 @@ class EntryLine(models.Model):
     # US 9.2: Bank Reconciliation support
     is_cleared = models.BooleanField(_("Is Cleared"), default=False, db_index=True, help_text=_("Indicates if this transaction has cleared the bank statement."))
     cleared_at = models.DateField(_("Cleared At"), null=True, blank=True)
-    # Add fields for analytical dimensions if needed
+    # Analytical accounting
+    project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True, related_name="entry_lines", verbose_name=_("Project/Service"))
 
     class Meta:
         verbose_name = _("Entry Line")

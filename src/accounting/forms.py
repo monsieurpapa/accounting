@@ -29,7 +29,7 @@ class AccountingPeriodForm(forms.ModelForm):
 
 EntryLineFormSet = inlineformset_factory(
     JournalEntry, EntryLine,
-    fields=['account', 'debit_amount', 'credit_amount', 'description'],
+    fields=['account', 'project', 'debit_amount', 'credit_amount', 'description'],
     extra=2,
     can_delete=True
-) 
+)

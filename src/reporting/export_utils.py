@@ -8,6 +8,9 @@ from decimal import Decimal
 from datetime import date
 
 from django.http import HttpResponse
+import csv
+from io import StringIO
+
 
 
 def _format_decimal(val):
@@ -348,3 +351,235 @@ def export_excel_trial_balance(report_data, grand_totals, fiscal_year, period, s
     wb.save(buffer)
     buffer.seek(0)
     return buffer.getvalue()
+
+
+def export_pdf_cash_flow(report_data, start_date, end_date, generation_date):
+    """Generate PDF for cash flow statement."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("Cash Flow Statement / Flux des Trésoreries", styles['Heading1']))
+    elements.append(Paragraph(f"Period: {start_date} to {end_date}", styles['Normal']))
+    elements.append(Paragraph(f"Generated: {generation_date}", styles['Normal']))
+    elements.append(Spacer(1, 0.5*cm))
+
+    data = [["Activity", "Section", "Amount"]]
+    
+    # Operating
+    data.append(["Operating Activities", "Inflows (Receipts)", _format_decimal(report_data['operating']['in'])])
+    data.append(["", "Outflows (Payments)", f"({_format_decimal(report_data['operating']['out'])})"])
+    data.append(["", "Net Cash from Operating", _format_decimal(report_data['operating']['net'])])
+    
+    # Investing
+    data.append(["Investing Activities", "Inflows", _format_decimal(report_data['investing']['in'])])
+    data.append(["", "Outflows", f"({_format_decimal(report_data['investing']['out'])})"])
+    data.append(["", "Net Cash from Investing", _format_decimal(report_data['investing']['net'])])
+    
+    # Financing
+    data.append(["Financing Activities", "Inflows", _format_decimal(report_data['financing']['in'])])
+    data.append(["", "Outflows", f"({_format_decimal(report_data['financing']['out'])})"])
+    data.append(["", "Net Cash from Financing", _format_decimal(report_data['financing']['net'])])
+    
+    # Summary
+    data.append(["", "NET INCREASE/DECREASE IN CASH", _format_decimal(report_data['summary']['net_change'])])
+    data.append(["", "CASH AT BEGINNING OF PERIOD", _format_decimal(report_data['summary']['beginning'])])
+    data.append(["", "CASH AT END OF PERIOD", _format_decimal(report_data['summary']['ending'])])
+
+    t = Table(data, colWidths=[5*cm, 8*cm, 4*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        # Highlight Net rows
+        ('FONTNAME', (0, 3), (2, 3), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 6), (2, 6), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 9), (2, 9), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 10), (2, 12), 'Helvetica-Bold'),
+    ]))
+    elements.append(t)
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def export_excel_cash_flow(report_data, start_date, end_date, generation_date):
+    """Generate Excel for cash flow statement."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Cash Flow Statement"
+    ws.append(["Cash Flow Statement / Flux des Trésoreries"])
+    ws.append([f"Period: {start_date} to {end_date}", f"Generated: {generation_date}"])
+    ws.append([])
+    ws.append(["Activity", "Section", "Amount"])
+    ws['A4'].font = ws['B4'].font = ws['C4'].font = Font(bold=True)
+    
+    # Helper to append rows
+    def add_section(title, data):
+        ws.append([title, "Inflows", float(data['in'])])
+        ws.append(["", "Outflows", -float(data['out'])])
+        row = ws.max_row + 1
+        ws.append(["", f"Net Cash from {title}", float(data['net'])])
+        ws.cell(row=ws.max_row, column=3).font = Font(bold=True)
+
+    add_section("Operating Activities", report_data['operating'])
+    add_section("Investing Activities", report_data['investing'])
+    add_section("Financing Activities", report_data['financing'])
+    
+    ws.append([])
+    ws.append(["", "NET INCREASE/DECREASE IN CASH", float(report_data['summary']['net_change'])])
+    ws.cell(row=ws.max_row, column=2).font = Font(bold=True)
+    ws.append(["", "CASH AT BEGINNING OF PERIOD", float(report_data['summary']['beginning'])])
+    ws.append(["", "CASH AT END OF PERIOD", float(report_data['summary']['ending'])])
+    ws.cell(row=ws.max_row, column=3).font = Font(bold=True)
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def export_csv_general_ledger(entry_lines, selected_account, generation_date, fiscal_year=None, period=None):
+    """Generate CSV for general ledger report."""
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["General Ledger / Grand Livre"])
+    if selected_account:
+        writer.writerow([f"Account: {selected_account.code} - {selected_account.name}"])
+    if fiscal_year:
+        writer.writerow([f"Fiscal Year: {fiscal_year.name}"])
+    if period:
+        writer.writerow([f"Period: {period.name}"])
+    writer.writerow([f"Generated: {generation_date}"])
+    writer.writerow([])
+    
+    headers = ["Date", "Reference", "Description", "Debit", "Credit"]
+    writer.writerow(headers)
+    
+    for line in entry_lines:
+        je = line.journal_entry
+        writer.writerow([
+            str(je.date),
+            je.reference or "-",
+            line.description or "-",
+            line.debit_amount or 0,
+            line.credit_amount or 0,
+        ])
+    
+    return output.getvalue()
+
+
+def export_csv_balance_sheet(assets, liabilities, equity, total_assets, total_liabilities, total_equity, as_of_date, generation_date):
+    """Generate CSV for balance sheet."""
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["Balance Sheet / Bilan"])
+    writer.writerow([f"As of: {as_of_date}", f"Generated: {generation_date}"])
+    writer.writerow([])
+    
+    writer.writerow(["Code", "Name", "Balance"])
+    for row in assets:
+        writer.writerow([row['code'], row['name'], row['balance']])
+    writer.writerow(["", "TOTAL ASSETS", total_assets])
+    for row in liabilities:
+        writer.writerow([row['code'], row['name'], row['balance']])
+    writer.writerow(["", "TOTAL LIABILITIES", total_liabilities])
+    for row in equity:
+        writer.writerow([row['code'], row['name'], row['balance']])
+    writer.writerow(["", "TOTAL EQUITY", total_equity])
+    
+    return output.getvalue()
+
+
+def export_csv_income_statement(revenues, expenses, total_revenue, total_expense, net_income, start_date, end_date, generation_date):
+    """Generate CSV for income statement."""
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["Income Statement / Compte de Resultat"])
+    writer.writerow([f"Period: {start_date} to {end_date}", f"Generated: {generation_date}"])
+    writer.writerow([])
+    
+    writer.writerow(["Code", "Name", "Amount"])
+    for row in revenues:
+        writer.writerow([row['code'], row['name'], row['balance']])
+    writer.writerow(["", "TOTAL REVENUE", total_revenue])
+    for row in expenses:
+        writer.writerow([row['code'], row['name'], row['balance']])
+    writer.writerow(["", "TOTAL EXPENSES", total_expense])
+    writer.writerow(["", "NET INCOME", net_income])
+    
+    return output.getvalue()
+
+
+def export_csv_trial_balance(report_data, grand_totals, fiscal_year, period, start_date, end_date, generation_date):
+    """Generate CSV for trial balance."""
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    period_str = period.name if period else (fiscal_year.name if fiscal_year else f"{start_date} - {end_date}")
+    writer.writerow(["Trial Balance / Balance de Verification"])
+    writer.writerow([f"Period: {period_str}", f"Generated: {generation_date}"])
+    writer.writerow([])
+    
+    headers = ["Code", "Name", "Opening Debit", "Opening Credit", "Period Debit", "Period Credit", "Closing Debit", "Closing Credit"]
+    writer.writerow(headers)
+    
+    for row in report_data:
+        writer.writerow([
+            row['code'], row['name'],
+            row['opening_debit'], row['opening_credit'],
+            row['period_debit'], row['period_credit'],
+            row['closing_debit'], row['closing_credit'],
+        ])
+    
+    writer.writerow([
+        "", "TOTALS",
+        grand_totals['opening_debit'], grand_totals['opening_credit'],
+        grand_totals['period_debit'], grand_totals['period_credit'],
+        grand_totals['closing_debit'], grand_totals['closing_credit'],
+    ])
+    
+    return output.getvalue()
+
+
+def export_csv_cash_flow(report_data, start_date, end_date, generation_date):
+    """Generate CSV for cash flow statement."""
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(["Cash Flow Statement / Flux des Trésoreries"])
+    writer.writerow([f"Period: {start_date} to {end_date}", f"Generated: {generation_date}"])
+    writer.writerow([])
+    
+    writer.writerow(["Activity", "Section", "Amount"])
+    
+    def write_section(title, data):
+        writer.writerow([title, "Inflows", data['in']])
+        writer.writerow(["", "Outflows", -data['out']])
+        writer.writerow(["", f"Net Cash from {title}", data['net']])
+
+    write_section("Operating Activities", report_data['operating'])
+    write_section("Investing Activities", report_data['investing'])
+    write_section("Financing Activities", report_data['financing'])
+    
+    writer.writerow([])
+    writer.writerow(["", "NET INCREASE/DECREASE IN CASH", report_data['summary']['net_change']])
+    writer.writerow(["", "CASH AT BEGINNING OF PERIOD", report_data['summary']['beginning']])
+    writer.writerow(["", "CASH AT END OF PERIOD", report_data['summary']['ending']])
+    
+    return output.getvalue()

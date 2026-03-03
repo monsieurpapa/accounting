@@ -10,8 +10,11 @@ from .views import (
     JournalEntryPostView,
     FiscalYearListView, FiscalYearCreateView, FiscalYearUpdateView, FiscalYearDeleteView, FiscalYearDetailView,
     AccountingPeriodListView, AccountingPeriodCreateView, AccountingPeriodUpdateView, AccountingPeriodDeleteView, AccountingPeriodDetailView,
-    AccountingPeriodCloseView
+    AccountingPeriodCloseView,
+    ProjectListView, ProjectCreateView, ProjectUpdateView, ProjectDeleteView, ProjectDetailView
 )
+
+
 
 app_name = 'accounting'
 
@@ -49,4 +52,10 @@ urlpatterns = [
     path('periods/<uuid:uuid>/delete/', AccountingPeriodDeleteView.as_view(), name='accountingperiod_delete'),
     path('periods/<uuid:uuid>/', AccountingPeriodDetailView.as_view(), name='accountingperiod_detail'),
     path('periods/<uuid:uuid>/close/', AccountingPeriodCloseView.as_view(), name='accountingperiod_close'),
+    path('projects/', ProjectListView.as_view(), name='project_list'),
+    path('projects/create/', ProjectCreateView.as_view(), name='project_create'),
+    path('projects/<uuid:uuid>/edit/', ProjectUpdateView.as_view(), name='project_edit'),
+    path('projects/<uuid:uuid>/delete/', ProjectDeleteView.as_view(), name='project_delete'),
+    path('projects/<uuid:uuid>/', ProjectDetailView.as_view(), name='project_detail'),
 ]
+

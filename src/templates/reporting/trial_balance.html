@@ -28,10 +28,19 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-end border py-0" aria-labelledby="exportDropdown">
                         <div class="bg-white py-2">
-                            <a class="dropdown-item {% if not fiscal_year %}disabled{% endif %}" href="{% if fiscal_year %}{{ export_pdf_url }}{% else %}#{% endif %}"><span class="far fa-file-pdf me-2"></span>PDF</a>
-                            <a class="dropdown-item {% if not fiscal_year %}disabled{% endif %}" href="{% if fiscal_year %}{{ export_excel_url }}{% else %}#{% endif %}"><span class="far fa-file-excel me-2"></span>Excel</a>
+                            <a class="dropdown-item {% if not fiscal_year %}disabled{% endif %}"
+                                href="{% if fiscal_year %}{{ export_pdf_url }}{% else %}#{% endif %}"><span
+                                    class="far fa-file-pdf me-2"></span>PDF</a>
+                            <a class="dropdown-item {% if not fiscal_year %}disabled{% endif %}"
+                                href="{% if fiscal_year %}{{ export_excel_url }}{% else %}#{% endif %}"><span
+                                    class="far fa-file-excel me-2"></span>Excel</a>
+                            <a class="dropdown-item {% if not fiscal_year %}disabled{% endif %}"
+                                href="{% if fiscal_year %}{{ export_csv_url }}{% else %}#{% endif %}"><span
+                                    class="fas fa-file-csv me-2"></span>CSV</a>
+
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#" onclick="window.print(); return false;"><span class="fas fa-print me-2"></span>{% trans "Imprimer" %}</a>
+                            <a class="dropdown-item" href="#" onclick="window.print(); return false;"><span
+                                    class="fas fa-print me-2"></span>{% trans "Imprimer" %}</a>
                         </div>
                     </div>
                 </div>
@@ -47,7 +56,8 @@
                     <select name="fiscal_year" id="fiscal_year" class="form-select form-select-sm shadow-none" required>
                         <option value="">-- {% trans "Sélectionner" %} --</option>
                         {% for fy in fiscal_years %}
-                        <option value="{{ fy.pk }}" {% if fiscal_year and fy.pk == fiscal_year.pk %}selected{% endif %}>{{ fy.name }}</option>
+                        <option value="{{ fy.pk }}" {% if fiscal_year and fy.pk==fiscal_year.pk %}selected{% endif %}>{{
+                            fy.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -56,7 +66,8 @@
                     <select name="period" id="period" class="form-select form-select-sm shadow-none">
                         <option value="">{% trans "Toutes les périodes" %}</option>
                         {% for p in periods %}
-                        <option value="{{ p.pk }}" {% if period and p.pk == period.pk %}selected{% endif %}>{{ p.name }}</option>
+                        <option value="{{ p.pk }}" {% if period and p.pk==period.pk %}selected{% endif %}>{{ p.name }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -71,7 +82,8 @@
         <div class="border rounded-3 p-4 bg-white shadow-sm mb-4">
             <div class="text-center mb-4">
                 <h4 class="text-900 fw-bold">{% trans "Balance de vérification" %}</h4>
-                <p class="mb-0 fs--1">{% trans "Période" %}: {% if period %}{{ period.name }}{% elif fiscal_year %}{{ fiscal_year.name }}{% else %}--{% endif %}</p>
+                <p class="mb-0 fs--1">{% trans "Période" %}: {% if period %}{{ period.name }}{% elif fiscal_year %}{{
+                    fiscal_year.name }}{% else %}--{% endif %}</p>
             </div>
 
             <div class="table-responsive scrollbar">
@@ -130,7 +142,8 @@
 
         <div class="row fs--1 text-700">
             <div class="col-md-6">
-                <p class="mb-0"><strong>{% trans "Date de génération" %}:</strong> {{ generation_date|date:"d/m/Y" }}</p>
+                <p class="mb-0"><strong>{% trans "Date de génération" %}:</strong> {{ generation_date|date:"d/m/Y" }}
+                </p>
             </div>
             <div class="col-md-6 text-end">
                 <p class="mb-0"><strong>{% trans "Généré par" %}:</strong> {{ request.user.get_full_name }}</p>
@@ -143,7 +156,7 @@
 {% block extra_js %}
 <script>
     // Reload periods when fiscal year changes
-    document.getElementById('fiscal_year')?.addEventListener('change', function() {
+    document.getElementById('fiscal_year')?.addEventListener('change', function () {
         this.form.submit();
     });
 </script>

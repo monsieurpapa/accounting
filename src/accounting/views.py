@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
-from .models import ChartOfAccounts, JournalEntry, FiscalYear, AccountingPeriod, Journal
+from .models import ChartOfAccounts, JournalEntry, FiscalYear, AccountingPeriod, Journal, Project, EntryLine
+
 from organization.models import Organization
 from .forms import ChartOfAccountsForm, JournalForm, JournalEntryForm, EntryLineFormSet, FiscalYearForm, AccountingPeriodForm
 from django.contrib.auth.decorators import login_required, permission_required
@@ -476,3 +477,69 @@ class AccountingPeriodCloseView(RoleRequiredMixin, TenantAccessMixin, DetailView
         else:
             messages.error(request, message)
         return redirect('accounting:accountingperiod_detail', uuid=self.object.uuid)
+
+
+class ProjectListView(RoleRequiredMixin, TenantAccessMixin, ListView):
+    model = Project
+    template_name = 'accounting/project_list.html'
+    context_object_name = 'projects'
+    roles_required = ['manager', 'admin']
+
+    def get_queryset(self):
+        return Project.objects.filter(organization=_get_user_organization(self.request.user))
+
+
+class ProjectCreateView(RoleRequiredMixin, TenantAccessMixin, CreateView):
+    model = Project
+    template_name = 'accounting/project_form.html'
+    fields = ['code', 'name', 'description', 'start_date', 'end_date', 'is_active']
+    roles_required = ['manager', 'admin']
+
+    def form_valid(self, form):
+        form.instance.organization = _get_user_organization(self.request.user)
+        messages.success(self.request, "Project created successfully.")
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('accounting:project_list')
+
+
+class ProjectUpdateView(RoleRequiredMixin, TenantAccessMixin, UpdateView):
+    model = Project
+    template_name = 'accounting/project_form.html'
+    fields = ['code', 'name', 'description', 'start_date', 'end_date', 'is_active']
+    roles_required = ['manager', 'admin']
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def form_valid(self, form):
+        messages.success(self.request, "Project updated successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('accounting:project_list')
+
+
+class ProjectDeleteView(RoleRequiredMixin, TenantAccessMixin, DeleteView):
+    model = Project
+    template_name = 'accounting/project_confirm_delete.html'
+    roles_required = ['admin']
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Project deleted successfully.")
+        return super().delete(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('accounting:project_list')
+
+
+class ProjectDetailView(RoleRequiredMixin, TenantAccessMixin, DetailView):
+    model = Project
+    template_name = 'accounting/project_detail.html'
+    roles_required = ['manager', 'admin']
+    slug_field = 'uuid'
+    slug_url_kwarg = 'uuid'
+    context_object_name = 'project'
+

@@ -72,5 +72,40 @@
             </div>
         </div>
     </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-primary text-primary me-2"><span
+                            class="fas fa-hand-holding-usd fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "Flux des Trésoreries" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "Analyses cash movements across operating, investing, and financing activities." %}
+                </p>
+                <a href="{% url 'reporting:cash_flow_statement' %}" class="btn btn-falcon-primary btn-sm mt-2">
+                    {% trans "View Report" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-item icon-item-sm shadow-none bg-soft-secondary text-secondary me-2"><span
+                            class="fas fa-calculator fs--1"></span></div>
+                    <h5 class="mb-0">{% trans "Tableau d'Amortissement" %}</h5>
+                </div>
+                <p class="text-muted fs--1">
+                    {% trans "Gérez l'amortissement des immobilisations et consultez les dotations." %}
+                </p>
+                <a href="{% url 'assets:fixedasset_list' %}" class="btn btn-falcon-default btn-sm mt-2">
+                    {% trans "Voir les Actifs" %}
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
+
 {% endblock %}

@@ -53,14 +53,17 @@ INSTALLED_APPS = [
     'django_celery_beat',
 
     # Local apps
-    'accounting.apps.AccountingConfig',
-    'assets.apps.AssetsConfig',
-    'budget.apps.BudgetConfig',
-    'cashflow.apps.CashflowConfig',
-    'core.apps.CoreConfig',
-    'organization.apps.OrganizationConfig',
-    'reporting.apps.ReportingConfig',
-    'users.apps.UsersConfig',
+    'accounting',
+    'assets',
+    'budget',
+    'cashflow',
+    'core',
+    'inventory',
+    'invoicing',
+    'organization',
+    'reporting',
+    'users',
+
 
     # Crispy Forms
     'crispy_forms',
